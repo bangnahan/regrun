@@ -649,7 +649,7 @@ class AdminController extends Controller
         ];
 
         $tripayStatus = $this->tripayService->testConnection();
-        $mailketingStatus = $this->mailketingService->testConnection();
+        $mailketingStatus = $this->mailketingService->checkStatus();
 
         return view('admin.settings', compact('settings', 'tripayStatus', 'mailketingStatus'));
     }
@@ -661,15 +661,18 @@ class AdminController extends Controller
     {
         $request->validate([
             'recipient' => 'required|email|max:150',
+            'sample_type' => 'nullable|string|in:pending_payment,invoice,eticket,simple',
         ]);
 
-        $res = $this->mailketingService->testConnection($request->recipient);
+        $sampleType = $request->input('sample_type', 'invoice');
+        $res = $this->mailketingService->sendSampleEmail($request->recipient, $sampleType);
 
         if (!empty($res['connected'])) {
-            return back()->with('success', "Email uji coba berhasil dikirim ke {$request->recipient} melalui Mailketing API.");
+            $typeName = $res['type_name'] ?? 'Transaksi';
+            return back()->with('success', "Email contoh '{$typeName}' berhasil dikirim ke {$request->recipient} via Mailketing API.");
         }
 
-        return back()->with('error', "Gagal mengirim email uji coba: " . ($res['error'] ?? 'Terjadi kesalahan pada server Mailketing.'));
+        return back()->with('error', "Gagal mengirim email: " . ($res['error'] ?? 'Terjadi kesalahan pada server Mailketing.'));
     }
 
     /**

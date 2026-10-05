@@ -99,26 +99,40 @@
             <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <button type="button" 
                         @click="showTestForm = !showTestForm" 
-                        class="text-xs font-bold text-orange-600 hover:text-orange-700 transition flex items-center gap-1">
-                    <span>🚀 Tes Kirim Email</span>
+                        class="text-xs font-bold text-orange-600 hover:text-orange-700 transition flex items-center gap-1.5">
+                    <span>🚀 Tes Kirim Email Transaksi</span>
+                    <span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold">Simulasi</span>
                 </button>
                 <span class="text-[11px] text-slate-400 font-medium">Transactional API</span>
             </div>
 
-            <!-- Inline Test Email Box -->
+            <!-- Inline Test Email Box with Template Selection -->
             <div x-show="showTestForm" x-collapse class="mt-3 pt-3 border-t border-slate-100">
-                <form action="{{ route('admin.settings.test_email') }}" method="POST" class="space-y-2">
+                <form action="{{ route('admin.settings.test_email') }}" method="POST" class="space-y-2.5">
                     @csrf
-                    <label class="block text-[11px] font-bold text-slate-700">Kirim email simulasi ke alamat Anda:</label>
-                    <div class="flex gap-2">
-                        <input type="email" 
-                               name="recipient" 
-                               required 
-                               placeholder="emailanda@gmail.com" 
-                               class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
-                        <button type="submit" class="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-lg transition shrink-0">
-                            Kirim
-                        </button>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Pilih Contoh Email Transaksi:</label>
+                        <select name="sample_type" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <option value="invoice"> Bukti Pembayaran Lunas (Invoice)</option>
+                            <option value="eticket"> Official E-Ticket Pelari (dengan QR Code)</option>
+                            <option value="pending_payment"> Tagihan Menunggu Pembayaran (VA / QRIS)</option>
+                            <option value="simple"> Tes Koneksi Sederhana</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Email Penerima Uji Coba:</label>
+                        <div class="flex gap-2">
+                            <input type="email" 
+                                   name="recipient" 
+                                   value="{{ auth()->user()->email ?? 'bangnahan@gmail.com' }}"
+                                   required 
+                                   placeholder="emailanda@gmail.com" 
+                                   class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <button type="submit" class="px-4 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-lg shadow-sm transition shrink-0">
+                                Kirim Email
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
