@@ -29,15 +29,15 @@ class DatabaseSeeder extends Seeder
 
         // 2. Master Jersey Sizes (XS to 5XL)
         $sizes = [
-            ['code' => 'XS', 'label' => 'XS (Lebar Dada 44 cm)', 'order' => 1],
-            ['code' => 'S', 'label' => 'S (Lebar Dada 47 cm)', 'order' => 2],
-            ['code' => 'M', 'label' => 'M (Lebar Dada 50 cm)', 'order' => 3],
-            ['code' => 'L', 'label' => 'L (Lebar Dada 53 cm)', 'order' => 4],
-            ['code' => 'XL', 'label' => 'XL (Lebar Dada 56 cm)', 'order' => 5],
-            ['code' => 'XXL', 'label' => 'XXL (Lebar Dada 59 cm)', 'order' => 6],
-            ['code' => '3XL', 'label' => '3XL (Lebar Dada 62 cm)', 'order' => 7],
-            ['code' => '4XL', 'label' => '4XL (Lebar Dada 65 cm)', 'order' => 8],
-            ['code' => '5XL', 'label' => '5XL (Lebar Dada 68 cm)', 'order' => 9],
+            ['code' => 'XS', 'label' => 'Ukuran XS', 'order' => 1],
+            ['code' => 'S', 'label' => 'Ukuran S', 'order' => 2],
+            ['code' => 'M', 'label' => 'Ukuran M', 'order' => 3],
+            ['code' => 'L', 'label' => 'Ukuran L', 'order' => 4],
+            ['code' => 'XL', 'label' => 'Ukuran XL', 'order' => 5],
+            ['code' => 'XXL', 'label' => 'Ukuran XXL', 'order' => 6],
+            ['code' => '3XL', 'label' => 'Ukuran 3XL', 'order' => 7],
+            ['code' => '4XL', 'label' => 'Ukuran 4XL', 'order' => 8],
+            ['code' => '5XL', 'label' => 'Ukuran 5XL', 'order' => 9],
         ];
 
         foreach ($sizes as $s) {

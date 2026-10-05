@@ -67,11 +67,9 @@ erDiagram
 
     JERSEY_SIZES {
         bigint id PK
-        string size_code UK "XS, S, M, L, XL, XXL, 3XL"
-        string label "S (Dada 48cm, Pjg 68cm)"
+        string size_code UK "XS, S, M, L, XL, XXL, 3XL, 4XL, 5XL"
+        string label "Ukuran S"
         enum gender_cut "unisex, men, women"
-        integer chest_width_cm
-        integer body_length_cm
         boolean is_available
         integer sort_order
         timestamps created_at_updated_at
@@ -253,11 +251,9 @@ Master ukuran jersey yang diakomodir oleh pabrik/konveksi.
 | Kolom | Tipe Data | Nullable | Default | Keterangan |
 |---|---|---|---|---|
 | `id` | BIGINT UNSIGNED | No | Auto Increment | Primary Key |
-| `size_code` | VARCHAR(10) | No | - | "XS", "S", "M", "L", "XL", "XXL", "3XL" |
-| `label` | VARCHAR(50) | No | - | Cth: "M (Lebar Dada 50cm, Pjg 70cm)" |
+| `size_code` | VARCHAR(10) | No | - | "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL" |
+| `label` | VARCHAR(50) | No | - | Cth: "Ukuran M" |
 | `gender_cut` | ENUM | No | `'unisex'` | `'unisex'`, `'men'`, `'women'` |
-| `chest_width_cm` | SMALLINT | Yes | NULL | Lebar dada dalam satuan cm |
-| `body_length_cm` | SMALLINT | Yes | NULL | Panjang badan dalam satuan cm |
 | `is_available` | BOOLEAN | No | `TRUE` | Stok ketersediaan ukuran di pabrik |
 | `sort_order` | INT | No | `0` | Urutan dari ukuran terkecil ke terbesar |
 | `created_at` / `updated_at` | TIMESTAMP | Yes | NULL | Timestamps |

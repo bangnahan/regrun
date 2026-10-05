@@ -147,7 +147,7 @@
                                 <option value="">-- Pilih Ukuran Jersey (XS - 5XL) --</option>
                                 @foreach($jerseySizes as $size)
                                     <option value="{{ $size->id }}">
-                                        Size {{ $size->size_code }} &mdash; {{ $size->label }}
+                                        Size {{ $size->size_code }}
                                     </option>
                                 @endforeach
                             </select>
