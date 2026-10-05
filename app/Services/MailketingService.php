@@ -437,7 +437,7 @@ class MailketingService
     {
         $transaction = $participant->transaction;
         $event = $transaction->event;
-        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" . urlencode($participant->qr_code_hash);
+        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" . urlencode($participant->ticket_code);
         $orderUrl = route('order.show', ['invoice' => $transaction->invoice_number]);
 
         $bibDisplay = $participant->bib_number ? "BIB: {$participant->bib_number}" : "BIB: {$participant->bib_name}";

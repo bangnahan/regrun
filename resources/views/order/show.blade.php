@@ -134,7 +134,7 @@
                     <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                         <!-- QR Code for Racepack Collection -->
                         <div class="flex-shrink-0 text-center">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($p->qr_code_hash) }}" 
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($p->ticket_code) }}" 
                                  alt="QR Code Tiket" 
                                  class="w-32 h-32 rounded-xl border border-slate-200 p-1 shadow-sm" />
                             <div class="font-mono text-xs font-extrabold text-slate-900 mt-2">{{ $p->ticket_code }}</div>

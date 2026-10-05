@@ -79,7 +79,8 @@ class Participant extends Model
             $ticketCode = 'TKT-' . strtoupper(Str::random(6));
         }
 
-        $qrCodeHash = hash('sha256', $ticketCode . Str::uuid());
+        // Isi data QR Code dibuat sama persis dengan Nomor Tiket agar mudah discan oleh scanner panitia
+        $qrCodeHash = $ticketCode;
 
         return [$ticketCode, $qrCodeHash];
     }
