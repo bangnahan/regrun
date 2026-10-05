@@ -62,6 +62,10 @@ class RegistrationController extends Controller
                 $totalQuantity += (int) ($item['quantity'] ?? 0);
             }
 
+            if (JerseySize::count() === 0) {
+                self::ensureDefaultJerseySizes();
+            }
+
             $sessionParticipants = session('registration_participants', []);
             $jerseySizes = JerseySize::where('is_available', true)->orderBy('sort_order')->get();
 
@@ -125,10 +129,40 @@ class RegistrationController extends Controller
         // Save selected tickets in session
         session(['registration_tickets' => $selectedTickets, 'registration_event_id' => $event->id]);
 
+        if (JerseySize::count() === 0) {
+            self::ensureDefaultJerseySizes();
+        }
+
         $sessionParticipants = session('registration_participants', []);
         $jerseySizes = JerseySize::where('is_available', true)->orderBy('sort_order')->get();
 
         return view('registration.step2_participants', compact('event', 'selectedTickets', 'totalQuantity', 'jerseySizes', 'sessionParticipants'));
+    }
+
+    /**
+     * Ensure default standard jersey sizes exist
+     */
+    private static function ensureDefaultJerseySizes(): void
+    {
+        $defaultSizes = [
+            ['size_code' => 'XS', 'label' => 'Ukuran XS', 'sort_order' => 1],
+            ['size_code' => 'S', 'label' => 'Ukuran S', 'sort_order' => 2],
+            ['size_code' => 'M', 'label' => 'Ukuran M', 'sort_order' => 3],
+            ['size_code' => 'L', 'label' => 'Ukuran L', 'sort_order' => 4],
+            ['size_code' => 'XL', 'label' => 'Ukuran XL', 'sort_order' => 5],
+            ['size_code' => 'XXL', 'label' => 'Ukuran XXL', 'sort_order' => 6],
+            ['size_code' => '3XL', 'label' => 'Ukuran 3XL', 'sort_order' => 7],
+            ['size_code' => '4XL', 'label' => 'Ukuran 4XL', 'sort_order' => 8],
+            ['size_code' => '5XL', 'label' => 'Ukuran 5XL', 'sort_order' => 9],
+        ];
+        foreach ($defaultSizes as $ds) {
+            JerseySize::firstOrCreate(['size_code' => $ds['size_code']], [
+                'label' => $ds['label'],
+                'gender_cut' => 'unisex',
+                'is_available' => true,
+                'sort_order' => $ds['sort_order'],
+            ]);
+        }
     }
 
     /**
@@ -165,6 +199,23 @@ class RegistrationController extends Controller
             return view('registration.step3_checkout', compact('event', 'selectedTickets', 'participantsData', 'subtotal', 'paymentChannels'));
         }
 
+        // Sanitize string inputs in participants
+        if ($request->has('participants') && is_array($request->participants)) {
+            $cleaned = [];
+            foreach ($request->participants as $idx => $p) {
+                if (is_array($p)) {
+                    foreach ($p as $k => $v) {
+                        $p[$k] = is_string($v) ? trim($v) : $v;
+                    }
+                    if (!empty($p['bib_name'])) {
+                        $p['bib_name'] = mb_substr($p['bib_name'], 0, 12);
+                    }
+                }
+                $cleaned[$idx] = $p;
+            }
+            $request->merge(['participants' => $cleaned]);
+        }
+
         $request->validate([
             'participants' => 'required|array|min:1',
             'participants.*.full_name' => 'required|string|max:120',
@@ -179,6 +230,23 @@ class RegistrationController extends Controller
             'participants.*.emergency_contact_name' => 'required|string|max:100',
             'participants.*.emergency_contact_phone' => 'required|string|max:30',
             'participants.*.emergency_contact_relation' => 'required|string|max:50',
+        ], [
+            'participants.*.full_name.required' => 'Nama lengkap peserta wajib diisi.',
+            'participants.*.identity_number.required' => 'Nomor identitas (NIK/Paspor) wajib diisi.',
+            'participants.*.gender.required' => 'Pilih jenis kelamin peserta.',
+            'participants.*.gender.in' => 'Pilihan jenis kelamin harus Laki-laki atau Perempuan.',
+            'participants.*.date_of_birth.required' => 'Tanggal lahir peserta wajib diisi.',
+            'participants.*.date_of_birth.date' => 'Format tanggal lahir tidak valid.',
+            'participants.*.phone_number.required' => 'Nomor WhatsApp peserta wajib diisi.',
+            'participants.*.email.required' => 'Alamat email peserta wajib diisi.',
+            'participants.*.email.email' => 'Format alamat email tidak valid.',
+            'participants.*.jersey_size_id.required' => 'Pilih ukuran jersey untuk setiap peserta.',
+            'participants.*.jersey_size_id.exists' => 'Ukuran jersey yang dipilih tidak valid atau belum tersedia.',
+            'participants.*.bib_name.required' => 'Nama dada pada nomor BIB wajib diisi.',
+            'participants.*.bib_name.max' => 'Nama pada nomor BIB maksimal 12 karakter.',
+            'participants.*.emergency_contact_name.required' => 'Nama kontak darurat wajib diisi.',
+            'participants.*.emergency_contact_phone.required' => 'Nomor telepon kontak darurat wajib diisi.',
+            'participants.*.emergency_contact_relation.required' => 'Hubungan dengan kontak darurat wajib dipilih.',
         ]);
 
         $participantsData = $request->participants;

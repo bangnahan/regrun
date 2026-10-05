@@ -86,7 +86,10 @@
                                    value="{{ old('participants.'.$currentIndex.'.full_name', $sessionParticipants[$currentIndex]['full_name'] ?? '') }}"
                                    required 
                                    placeholder="Contoh: Budi Santoso"
-                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
+                                   class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.full_name') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
+                            @error('participants.'.$currentIndex.'.full_name')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- NIK / Passport -->
@@ -97,17 +100,23 @@
                                    value="{{ old('participants.'.$currentIndex.'.identity_number', $sessionParticipants[$currentIndex]['identity_number'] ?? '') }}"
                                    required 
                                    placeholder="16 digit NIK atau Nomor Paspor"
-                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
+                                   class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.identity_number') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
+                            @error('participants.'.$currentIndex.'.identity_number')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Gender -->
                         <div>
                             <label class="block font-bold text-slate-700 mb-1.5">Jenis Kelamin <span class="text-rose-500">*</span></label>
-                            <select name="participants[{{ $currentIndex }}][gender]" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white">
+                            <select name="participants[{{ $currentIndex }}][gender]" required class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.gender') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white">
                                 <option value="">-- Pilih Jenis Kelamin --</option>
                                 <option value="L" {{ old('participants.'.$currentIndex.'.gender', $sessionParticipants[$currentIndex]['gender'] ?? '') === 'L' ? 'selected' : '' }}>Laki-laki</option>
                                 <option value="P" {{ old('participants.'.$currentIndex.'.gender', $sessionParticipants[$currentIndex]['gender'] ?? '') === 'P' ? 'selected' : '' }}>Perempuan</option>
                             </select>
+                            @error('participants.'.$currentIndex.'.gender')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Tanggal Lahir -->
@@ -117,7 +126,10 @@
                                    name="participants[{{ $currentIndex }}][date_of_birth]" 
                                    value="{{ old('participants.'.$currentIndex.'.date_of_birth', $sessionParticipants[$currentIndex]['date_of_birth'] ?? '') }}"
                                    required 
-                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white" />
+                                   class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.date_of_birth') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white" />
+                            @error('participants.'.$currentIndex.'.date_of_birth')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- No. WhatsApp -->
@@ -128,7 +140,10 @@
                                    value="{{ old('participants.'.$currentIndex.'.phone_number', $sessionParticipants[$currentIndex]['phone_number'] ?? '') }}"
                                    required 
                                    placeholder="08123456789"
-                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
+                                   class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.phone_number') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
+                            @error('participants.'.$currentIndex.'.phone_number')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Email -->
@@ -139,7 +154,10 @@
                                    value="{{ old('participants.'.$currentIndex.'.email', $sessionParticipants[$currentIndex]['email'] ?? '') }}"
                                    required 
                                    placeholder="peserta@email.com"
-                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
+                                   class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.email') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
+                            @error('participants.'.$currentIndex.'.email')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Ukuran Jersey (XS to 5XL) -->
@@ -148,7 +166,7 @@
                                 <label class="font-bold text-slate-700">Ukuran Jersey Event <span class="text-rose-500">*</span></label>
                                 <span class="text-[11px] text-slate-400">Size chart di domain utama</span>
                             </div>
-                            <select name="participants[{{ $currentIndex }}][jersey_size_id]" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white font-semibold">
+                            <select name="participants[{{ $currentIndex }}][jersey_size_id]" required class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.jersey_size_id') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white font-semibold">
                                 <option value="">-- Pilih Ukuran Jersey (XS - 5XL) --</option>
                                 @foreach($jerseySizes as $size)
                                     <option value="{{ $size->id }}" {{ old('participants.'.$currentIndex.'.jersey_size_id', $sessionParticipants[$currentIndex]['jersey_size_id'] ?? '') == $size->id ? 'selected' : '' }}>
@@ -156,6 +174,9 @@
                                     </option>
                                 @endforeach
                             </select>
+                            @error('participants.'.$currentIndex.'.jersey_size_id')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Nama di BIB (Maks 12 Karakter) -->
@@ -170,13 +191,16 @@
                                    maxlength="12" 
                                    required 
                                    placeholder="Contoh: BUDI RUN"
-                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm uppercase tracking-wider font-semibold" />
+                                   class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.bib_name') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm uppercase tracking-wider font-semibold" />
+                            @error('participants.'.$currentIndex.'.bib_name')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Golongan Darah -->
                         <div>
                             <label class="block font-bold text-slate-700 mb-1.5">Golongan Darah (Keperluan Medis) <span class="text-rose-500">*</span></label>
-                            <select name="participants[{{ $currentIndex }}][blood_type]" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white">
+                            <select name="participants[{{ $currentIndex }}][blood_type]" required class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.blood_type') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white">
                                 @foreach(['UNKNOWN' => 'Tidak Tahu', 'A' => 'A', 'B' => 'B', 'AB' => 'AB', 'O' => 'O'] as $btKey => $btLabel)
                                     <option value="{{ $btKey }}" {{ old('participants.'.$currentIndex.'.blood_type', $sessionParticipants[$currentIndex]['blood_type'] ?? 'UNKNOWN') === $btKey ? 'selected' : '' }}>
                                         {{ $btLabel }}
@@ -209,7 +233,10 @@
                                        value="{{ old('participants.'.$currentIndex.'.emergency_contact_name', $sessionParticipants[$currentIndex]['emergency_contact_name'] ?? '') }}"
                                        required 
                                        placeholder="Nama kerabat"
-                                       class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white" />
+                                       class="w-full px-3 py-2 rounded-lg border {{ $errors->has('participants.'.$currentIndex.'.emergency_contact_name') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white" />
+                                @error('participants.'.$currentIndex.'.emergency_contact_name')
+                                    <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-slate-600 mb-1 font-medium">No. Telepon Kontak <span class="text-rose-500">*</span></label>
@@ -218,17 +245,23 @@
                                        value="{{ old('participants.'.$currentIndex.'.emergency_contact_phone', $sessionParticipants[$currentIndex]['emergency_contact_phone'] ?? '') }}"
                                        required 
                                        placeholder="08xxxxxxxx"
-                                       class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white" />
+                                       class="w-full px-3 py-2 rounded-lg border {{ $errors->has('participants.'.$currentIndex.'.emergency_contact_phone') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white" />
+                                @error('participants.'.$currentIndex.'.emergency_contact_phone')
+                                    <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-slate-600 mb-1 font-medium">Hubungan <span class="text-rose-500">*</span></label>
-                                <select name="participants[{{ $currentIndex }}][emergency_contact_relation]" required class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+                                <select name="participants[{{ $currentIndex }}][emergency_contact_relation]" required class="w-full px-3 py-2 rounded-lg border {{ $errors->has('participants.'.$currentIndex.'.emergency_contact_relation') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
                                     @foreach(['Orang Tua', 'Suami/Istri', 'Saudara Kandung', 'Teman / Kerabat', 'Lainnya'] as $rel)
                                         <option value="{{ $rel }}" {{ old('participants.'.$currentIndex.'.emergency_contact_relation', $sessionParticipants[$currentIndex]['emergency_contact_relation'] ?? '') === $rel ? 'selected' : '' }}>
                                             {{ $rel }}
                                         </option>
                                     @endforeach
                                 </select>
+                                @error('participants.'.$currentIndex.'.emergency_contact_relation')
+                                    <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -241,11 +274,54 @@
             <a href="{{ route('register.index') }}" class="text-xs font-semibold text-slate-600 hover:text-slate-900 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition">
                 &larr; Kembali Ubah Tiket
             </a>
-            <button type="submit" class="px-7 py-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm shadow-lg shadow-orange-600/30 transition flex items-center gap-2">
+            <button type="submit" id="btnSubmitParticipants" class="px-7 py-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm shadow-lg shadow-orange-600/30 transition flex items-center gap-2 cursor-pointer">
                 <span>Lanjut ke Pembayaran</span>
                 <span>&rarr;</span>
             </button>
         </div>
     </form>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        // Find first invalid input (native HTML5 check)
+        const invalid = form.querySelector(':invalid');
+        if (invalid) {
+            e.preventDefault();
+            
+            // Highlight element
+            invalid.classList.add('border-rose-500', 'ring-2', 'ring-rose-400', 'bg-rose-50');
+            
+            // Scroll to the invalid element smoothly (especially for iOS Safari)
+            invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            setTimeout(function() {
+                try { invalid.focus(); } catch (err) {}
+            }, 300);
+
+            // Determine friendly label
+            let label = invalid.closest('div')?.querySelector('label')?.innerText?.replace('*', '').trim() 
+                     || invalid.placeholder 
+                     || 'Data wajib diisi';
+            
+            alert('⚠️ ' + label + ' belum diisi atau formatnya belum sesuai. Mohon periksa kembali.');
+            return false;
+        }
+
+        // Show loading state on button
+        const btn = document.getElementById('btnSubmitParticipants');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Memproses...</span>';
+            btn.classList.add('opacity-75');
+        }
+    });
+});
+</script>
+@endpush
 @endsection

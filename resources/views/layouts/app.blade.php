@@ -34,6 +34,20 @@
     <!-- Main Content -->
     <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
         <!-- Flash Messages -->
+        @if($errors->any())
+            <div class="mb-5 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm shadow-sm">
+                <div class="font-bold mb-1.5 flex items-center gap-2">
+                    <span class="text-rose-500 font-bold text-lg">&times;</span>
+                    <span>Mohon periksa kembali formulir pendaftaran:</span>
+                </div>
+                <ul class="list-disc list-inside text-xs space-y-1 text-rose-700">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if(session('success'))
             <div class="mb-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-start gap-3 shadow-sm">
                 <span class="text-emerald-500 font-bold text-lg">&check;</span>
