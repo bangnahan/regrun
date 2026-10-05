@@ -132,7 +132,7 @@ class AdminController extends Controller
                 $headers[] = $s->size_code;
             }
             $headers[] = 'TOTAL JERSEY';
-            fputcsv($handle, $headers);
+            fputcsv($handle, $headers, ',', '"', "\\");
 
             $sizeTotals = array_fill_keys($sizes->pluck('size_code')->toArray(), 0);
             $grandTotal = 0;
@@ -152,7 +152,7 @@ class AdminController extends Controller
                     $grandTotal += $count;
                 }
                 $row[] = $rowTotal;
-                fputcsv($handle, $row);
+                fputcsv($handle, $row, ',', '"', "\\");
             }
 
             // Footer row
@@ -161,7 +161,7 @@ class AdminController extends Controller
                 $footer[] = $sizeTotals[$s->size_code];
             }
             $footer[] = $grandTotal;
-            fputcsv($handle, $footer);
+            fputcsv($handle, $footer, ',', '"', "\\");
 
             fclose($handle);
         }, $fileName, ['Content-Type' => 'text/csv']);
@@ -349,7 +349,7 @@ class AdminController extends Controller
                 'Catatan Medis',
                 'Komunitas',
                 'Status RPC',
-            ]);
+            ], ',', '"', "\\");
 
             foreach ($participants as $p) {
                 fputcsv($handle, [
@@ -371,7 +371,7 @@ class AdminController extends Controller
                     $p->medical_notes ?? '-',
                     $p->running_club ?? '-',
                     $p->is_racepack_collected ? 'Sudah Diambil' : 'Belum Diambil',
-                ]);
+                ], ',', '"', "\\");
             }
 
             fclose($handle);
