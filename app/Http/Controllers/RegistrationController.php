@@ -77,7 +77,14 @@ class RegistrationController extends Controller
                 }
 
                 $selectedTickets[] = [
-                    'category' => $category,
+                    'category_id' => $category->id,
+                    'category_name' => $category->name,
+                    'category_code' => $category->code,
+                    'category' => [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'code' => $category->code,
+                    ],
                     'quantity' => $qty,
                     'price' => $category->current_price,
                 ];
@@ -172,7 +179,8 @@ class RegistrationController extends Controller
 
             // 1. Lock categories and check quota
             foreach ($selectedTickets as $item) {
-                $category = TicketCategory::where('id', $item['category']['id'])
+                $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
+                $category = TicketCategory::where('id', $catId)
                     ->lockForUpdate()
                     ->firstOrFail();
 
@@ -213,9 +221,10 @@ class RegistrationController extends Controller
 
             // 3. Create Transaction Items
             foreach ($selectedTickets as $item) {
+                $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
                 TransactionItem::create([
                     'transaction_id' => $trx->id,
-                    'ticket_category_id' => $item['category']['id'],
+                    'ticket_category_id' => $catId,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['price'],
                     'subtotal' => $item['price'] * $item['quantity'],
@@ -225,13 +234,14 @@ class RegistrationController extends Controller
             // 4. Create Participants
             $participantIndex = 0;
             foreach ($selectedTickets as $item) {
+                $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
                 for ($i = 0; $i < $item['quantity']; $i++) {
                     $pData = $participantsData[$participantIndex] ?? [];
                     [$ticketCode, $qrCodeHash] = Participant::generateUniqueCodes();
 
                     Participant::create([
                         'transaction_id' => $trx->id,
-                        'ticket_category_id' => $item['category']['id'],
+                        'ticket_category_id' => $catId,
                         'jersey_size_id' => $pData['jersey_size_id'],
                         'ticket_code' => $ticketCode,
                         'full_name' => $pData['full_name'],

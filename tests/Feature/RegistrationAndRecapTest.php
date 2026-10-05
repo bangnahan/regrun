@@ -49,6 +49,52 @@ class RegistrationAndRecapTest extends TestCase
         $response->assertSee('Ukuran Jersey Event');
     }
 
+    public function test_step_checkout_with_array_session_data_renders_successfully()
+    {
+        $event = Event::first();
+        $category5K = TicketCategory::where('code', '5K')->first();
+        $sizeL = JerseySize::where('size_code', 'L')->first();
+
+        // Simulate session stored as associative array (e.g. database session driver deserialization)
+        session([
+            'registration_event_id' => $event->id,
+            'registration_tickets' => [
+                [
+                    'category' => [
+                        'id' => $category5K->id,
+                        'name' => $category5K->name,
+                        'code' => $category5K->code,
+                    ],
+                    'quantity' => 1,
+                    'price' => $category5K->current_price,
+                ],
+            ],
+        ]);
+
+        $response = $this->post(route('register.step_checkout'), [
+            'participants' => [
+                [
+                    'full_name' => 'Pelari Test',
+                    'identity_number' => '3171010101010001',
+                    'gender' => 'L',
+                    'date_of_birth' => '1995-05-15',
+                    'phone_number' => '081234567890',
+                    'email' => 'pelari@example.com',
+                    'jersey_size_id' => $sizeL->id,
+                    'blood_type' => 'O',
+                    'bib_name' => 'PELARI',
+                    'emergency_contact_name' => 'Kontak',
+                    'emergency_contact_phone' => '081299999999',
+                    'emergency_contact_relation' => 'Orang Tua',
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertSee('5K Fun Run');
+        $response->assertSee('Metode Pembayaran (Tripay)');
+    }
+
     public function test_full_checkout_process_and_jersey_recap_matrix()
     {
         $event = Event::first();

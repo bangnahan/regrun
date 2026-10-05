@@ -69,11 +69,11 @@
                                 #{{ $pNum }}
                             </span>
                             <h3 class="font-extrabold text-slate-900 text-base">
-                                Peserta {{ $pNum }} &mdash; <span class="text-orange-600">{{ $item['category']->name }}</span>
+                                Peserta {{ $pNum }} &mdash; <span class="text-orange-600">{{ $item['category_name'] ?? (is_array($item['category']) ? $item['category']['name'] : $item['category']->name) }}</span>
                             </h3>
                         </div>
                         <span class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-600">
-                            {{ $item['category']->code }}
+                            {{ $item['category_code'] ?? (is_array($item['category']) ? $item['category']['code'] : $item['category']->code) }}
                         </span>
                     </div>
 
