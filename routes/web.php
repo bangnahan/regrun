@@ -59,4 +59,5 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     // Pengaturan Tripay & Mailketing
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [AdminController::class, 'saveSettings'])->name('settings.save');
+    Route::post('/settings/test-email', [AdminController::class, 'testEmail'])->name('settings.test_email');
 });

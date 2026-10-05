@@ -121,7 +121,7 @@ class DatabaseSeeder extends Seeder
             ['key' => 'tripay_private_key', 'value' => 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280', 'group' => 'tripay'],
             ['key' => 'tripay_sandbox', 'value' => '1', 'group' => 'tripay'],
             ['key' => 'mailketing_api_token', 'value' => '308b31d3313311776744479fa8fd7eb3', 'group' => 'mailketing'],
-            ['key' => 'mailketing_sender_email', 'value' => 'hi@jelatik.com', 'group' => 'mailketing'],
+            ['key' => 'mailketing_sender_email', 'value' => 'hi@jelatix.com', 'group' => 'mailketing'],
             ['key' => 'mailketing_sender_name', 'value' => 'Panitia Nusantara Sunset Run', 'group' => 'mailketing'],
         ];
 

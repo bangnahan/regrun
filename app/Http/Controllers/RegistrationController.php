@@ -1,17 +1,5 @@
 <?php
 
-namespace App\Services;
-
-use App\Models\Event;
-use App\Models\JerseySize;
-use App\Models\Participant;
-use App\Models\TicketCategory;
-use App\Models\Transaction;
-use App\Models\TransactionItem;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-
 namespace App\Http\Controllers;
 
 use App\Models\Event;
@@ -20,18 +8,22 @@ use App\Models\Participant;
 use App\Models\TicketCategory;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Services\MailketingService;
 use App\Services\TripayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RegistrationController extends Controller
 {
     protected TripayService $tripayService;
+    protected MailketingService $mailketingService;
 
-    public function __construct(TripayService $tripayService)
+    public function __construct(TripayService $tripayService, MailketingService $mailketingService)
     {
         $this->tripayService = $tripayService;
+        $this->mailketingService = $mailketingService;
     }
 
     /**
@@ -283,6 +275,13 @@ class RegistrationController extends Controller
             'grand_total' => $tripayResult['amount'] ?? ($transaction->subtotal + ($tripayResult['fee'] ?? 0)),
             'expires_at' => $tripayResult['expires_at'] ?? now()->addMinutes(120),
         ]);
+
+        // Send Pending Payment / Invoice notification email via Mailketing
+        try {
+            $this->mailketingService->sendPendingPaymentEmail($transaction);
+        } catch (\Throwable $e) {
+            Log::warning('Mailketing pending payment email failed: ' . $e->getMessage());
+        }
 
         // Clear registration sessions
         session()->forget(['registration_tickets', 'registration_participants', 'registration_event_id']);

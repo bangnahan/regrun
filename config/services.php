@@ -42,4 +42,10 @@ return [
         'sandbox' => env('TRIPAY_SANDBOX', true),
     ],
 
+    'mailketing' => [
+        'api_token' => env('MAILKETING_API_TOKEN', '308b31d3313311776744479fa8fd7eb3'),
+        'sender_email' => env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com'),
+        'sender_name' => env('MAILKETING_SENDER_NAME', 'Panitia Event Lari'),
+    ],
+
 ];

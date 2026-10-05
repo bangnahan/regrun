@@ -426,13 +426,32 @@ class AdminController extends Controller
             'tripay_private_key' => SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', '')),
             'tripay_sandbox' => SystemSetting::get('tripay_sandbox', env('TRIPAY_SANDBOX', true)),
             'mailketing_api_token' => SystemSetting::get('mailketing_api_token', env('MAILKETING_API_TOKEN', '')),
-            'mailketing_sender_email' => SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatik.com')),
+            'mailketing_sender_email' => SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')),
             'mailketing_sender_name' => SystemSetting::get('mailketing_sender_name', env('MAILKETING_SENDER_NAME', 'Panitia Event Lari')),
         ];
 
         $tripayStatus = $this->tripayService->testConnection();
+        $mailketingStatus = $this->mailketingService->testConnection();
 
-        return view('admin.settings', compact('settings', 'tripayStatus'));
+        return view('admin.settings', compact('settings', 'tripayStatus', 'mailketingStatus'));
+    }
+
+    /**
+     * Test send email via Mailketing
+     */
+    public function testEmail(Request $request)
+    {
+        $request->validate([
+            'recipient' => 'required|email|max:150',
+        ]);
+
+        $res = $this->mailketingService->testConnection($request->recipient);
+
+        if (!empty($res['connected'])) {
+            return back()->with('success', "Email uji coba berhasil dikirim ke {$request->recipient} melalui Mailketing API.");
+        }
+
+        return back()->with('error', "Gagal mengirim email uji coba: " . ($res['error'] ?? 'Terjadi kesalahan pada server Mailketing.'));
     }
 
     /**

@@ -8,77 +8,121 @@
 <div class="max-w-4xl space-y-6">
     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
-            <h2 class="text-base font-extrabold text-slate-900">Konfigurasi Gateway &amp; Notifikasi</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Kredensial API Payment Gateway Tripay dan Layanan Email Mailketing.</p>
+            <h2 class="text-base font-extrabold text-slate-900">Konfigurasi Gateway &amp; Notifikasi Email</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Kredensial API Payment Gateway Tripay dan Layanan Notifikasi Email Mailketing.</p>
         </div>
         <a href="{{ route('admin.settings') }}" class="text-xs font-bold text-orange-600 hover:text-orange-700 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-200 transition flex items-center gap-1.5">
             <span>🔄</span>
-            <span>Refresh Koneksi</span>
+            <span>Refresh Status</span>
         </a>
     </div>
 
-    <!-- Live Status Banner Tripay -->
-    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm" x-data="{ showChannels: false }">
-        <div class="flex items-center justify-between">
+    <!-- Live Status Grid: Tripay & Mailketing -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Live Status Card Tripay -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm" x-data="{ showChannels: false }">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl {{ !empty($tripayStatus['connected']) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200' }} flex items-center justify-center font-bold text-lg">
+                <div class="w-10 h-10 rounded-xl {{ !empty($tripayStatus['connected']) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200' }} flex items-center justify-center font-bold text-lg shrink-0">
                     {{ !empty($tripayStatus['connected']) ? '⚡' : '❌' }}
                 </div>
-                <div>
-                    <div class="flex items-center gap-2">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
                         <h3 class="font-extrabold text-slate-900 text-sm">Status Koneksi API Tripay</h3>
                         @if(!empty($tripayStatus['connected']))
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
                                 TERKONEKSI ({{ $tripayStatus['mode'] ?? 'Sandbox' }})
                             </span>
                         @else
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
                                 GAGAL TERHUBUNG
                             </span>
                         @endif
                     </div>
-                    <p class="text-xs text-slate-500 mt-0.5">
+                    <p class="text-xs text-slate-500 mt-1 truncate">
                         @if(!empty($tripayStatus['connected']))
-                            Merchant Code: <strong class="font-mono text-slate-800">{{ $tripayStatus['merchant_code'] }}</strong> &bull; Total <strong class="text-emerald-700 font-bold">{{ $tripayStatus['channel_count'] }} Kanal Pembayaran Aktif</strong>
+                            Merchant: <strong class="font-mono text-slate-800">{{ $tripayStatus['merchant_code'] }}</strong> &bull; <strong class="text-emerald-700">{{ $tripayStatus['channel_count'] }} Kanal Aktif</strong>
                         @else
-                            Pesan error: <strong class="text-rose-600 font-mono text-xs">{{ $tripayStatus['error'] ?? 'Tidak dapat menjangkau server Tripay' }}</strong>
+                            Error: <span class="text-rose-600 font-mono text-[11px]">{{ $tripayStatus['error'] ?? 'Offline' }}</span>
                         @endif
                     </p>
                 </div>
             </div>
 
             @if(!empty($tripayStatus['connected']))
-                <button type="button" 
-                        @click="showChannels = !showChannels" 
-                        class="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition">
-                    <span x-text="showChannels ? 'Tutup Daftar Kanal ▲' : 'Lihat Kanal Aktif ▼'"></span>
-                </button>
-            @endif
-        </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <button type="button" 
+                            @click="showChannels = !showChannels" 
+                            class="text-xs font-bold text-slate-700 hover:text-slate-900 transition flex items-center gap-1">
+                        <span x-text="showChannels ? 'Tutup Kanal ▲' : 'Lihat 15 Kanal Pembayaran ▼'"></span>
+                    </button>
+                    <span class="text-[11px] text-slate-400 font-medium">Auto-Sync</span>
+                </div>
 
-        @if(!empty($tripayStatus['connected']) && !empty($tripayStatus['channels']))
-            <div x-show="showChannels" x-collapse class="mt-5 pt-4 border-t border-slate-100">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    @foreach($tripayStatus['channels'] as $ch)
-                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2">
-                            <div class="flex items-center gap-2 overflow-hidden">
-                                @if(!empty($ch['icon_url']))
-                                    <img src="{{ $ch['icon_url'] }}" alt="{{ $ch['name'] }}" class="h-5 w-auto object-contain bg-white px-1 py-0.5 rounded border border-slate-200">
-                                @endif
-                                <div class="truncate">
-                                    <div class="font-bold text-slate-900 truncate">{{ $ch['name'] }}</div>
-                                    <div class="text-[10px] font-mono text-slate-500">{{ $ch['code'] }} &bull; {{ $ch['group'] }}</div>
-                                </div>
-                            </div>
-                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
-                                Aktif
-                            </span>
+                <div x-show="showChannels" x-collapse class="mt-3 pt-3 border-t border-slate-100 max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                    @foreach($tripayStatus['channels'] ?? [] as $ch)
+                        <div class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] flex items-center justify-between gap-2">
+                            <span class="font-semibold text-slate-800 truncate">{{ $ch['name'] }}</span>
+                            <span class="font-mono text-[10px] text-slate-500 shrink-0">{{ $ch['code'] }}</span>
                         </div>
                     @endforeach
                 </div>
+            @endif
+        </div>
+
+        <!-- Live Status Card Mailketing -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm" x-data="{ showTestForm: false }">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl {{ !empty($mailketingStatus['connected']) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200' }} flex items-center justify-center font-bold text-lg shrink-0">
+                    {{ !empty($mailketingStatus['connected']) ? '✉️' : '⚠️' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <h3 class="font-extrabold text-slate-900 text-sm">Mailketing Email API</h3>
+                        @if(!empty($mailketingStatus['connected']))
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                                TERKONEKSI (Aktif)
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                                PERLU CEK
+                            </span>
+                        @endif
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1 truncate">
+                        Sender: <strong class="font-mono text-slate-800">{{ $settings['mailketing_sender_email'] }}</strong>
+                    </p>
+                </div>
             </div>
-        @endif
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <button type="button" 
+                        @click="showTestForm = !showTestForm" 
+                        class="text-xs font-bold text-orange-600 hover:text-orange-700 transition flex items-center gap-1">
+                    <span>🚀 Tes Kirim Email</span>
+                </button>
+                <span class="text-[11px] text-slate-400 font-medium">Transactional API</span>
+            </div>
+
+            <!-- Inline Test Email Box -->
+            <div x-show="showTestForm" x-collapse class="mt-3 pt-3 border-t border-slate-100">
+                <form action="{{ route('admin.settings.test_email') }}" method="POST" class="space-y-2">
+                    @csrf
+                    <label class="block text-[11px] font-bold text-slate-700">Kirim email simulasi ke alamat Anda:</label>
+                    <div class="flex gap-2">
+                        <input type="email" 
+                               name="recipient" 
+                               required 
+                               placeholder="emailanda@gmail.com" 
+                               class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <button type="submit" class="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-lg transition shrink-0">
+                            Kirim
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <form action="{{ route('admin.settings.save') }}" method="POST" class="space-y-6">
@@ -139,8 +183,8 @@
             <div class="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100">
                 <span class="text-xl">✉️</span>
                 <div>
-                    <h3 class="font-extrabold text-slate-900 text-sm">Mailketing Email API</h3>
-                    <p class="text-[11px] text-slate-500">Pengiriman invoice &amp; E-Ticket resmi ke peserta lomba.</p>
+                    <h3 class="font-extrabold text-slate-900 text-sm">Mailketing Email API (Notifikasi Transaksi &amp; E-Ticket)</h3>
+                    <p class="text-[11px] text-slate-500">Kirim email invoice, petunjuk pembayaran, dan E-Ticket dengan QR Code otomatis.</p>
                 </div>
             </div>
 
@@ -148,17 +192,29 @@
                 <div class="sm:col-span-2">
                     <label class="block font-bold text-slate-700 mb-1">API Token Mailketing</label>
                     <input type="text" name="mailketing_api_token" value="{{ $settings['mailketing_api_token'] }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <p class="text-[11px] text-slate-400 mt-1">Dapatkan dari menu API / Integrasi di dashboard Mailketing Anda.</p>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Sender Email</label>
-                    <input type="email" name="mailketing_sender_email" value="{{ $settings['mailketing_sender_email'] }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <label class="block font-bold text-slate-700 mb-1">Sender Email Terverifikasi</label>
+                    <input type="email" name="mailketing_sender_email" value="{{ $settings['mailketing_sender_email'] }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium">
+                    <p class="text-[11px] text-emerald-600 mt-1">Pastikan domain sudah diverifikasi di Mailketing (contoh: hi@jelatix.com).</p>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Sender Name</label>
-                    <input type="text" name="mailketing_sender_name" value="{{ $settings['mailketing_sender_name'] }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <label class="block font-bold text-slate-700 mb-1">Sender Name (Nama Pengirim)</label>
+                    <input type="text" name="mailketing_sender_name" value="{{ $settings['mailketing_sender_name'] }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium">
+                    <p class="text-[11px] text-slate-400 mt-1">Nama penyelenggara yang tampil di inbox penerima.</p>
                 </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 leading-relaxed">
+                <strong>Otomasi Notifikasi Email yang Aktif:</strong>
+                <ul class="list-disc list-inside mt-1.5 space-y-1 text-[11px] text-slate-500">
+                    <li><strong class="text-slate-700">Email Tagihan (UNPAID):</strong> Dikirim seketika saat registrasi disubmit, berisi batas waktu dan kode pembayaran / VA.</li>
+                    <li><strong class="text-slate-700">Email Bukti Lunas (PAID):</strong> Dikirim otomatis saat pembayaran terverifikasi oleh Tripay.</li>
+                    <li><strong class="text-slate-700">E-Ticket Pelari (PAID):</strong> Dikirim ke email masing-masing peserta lengkap dengan QR Code &amp; Nomor BIB resmi.</li>
+                </ul>
             </div>
         </div>
 
