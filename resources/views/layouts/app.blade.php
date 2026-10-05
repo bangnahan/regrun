@@ -21,14 +21,13 @@
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <a href="{{ route('register.index') }}" class="flex items-center gap-2 font-extrabold text-lg text-slate-900 tracking-tight">
-                <span class="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white text-base shadow">🏃</span>
-                <span>{{ $event->title ?? 'RegRun Portal' }}</span>
+                @if(!empty($brandLogoUrl ?? $currentEvent?->logo_url ?? $event?->logo_url))
+                    <img src="{{ $brandLogoUrl ?? $currentEvent?->logo_url ?? $event?->logo_url }}" alt="Logo" class="h-8 max-w-[140px] object-contain">
+                @else
+                    <span class="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center text-white text-base shadow">🏃</span>
+                @endif
+                <span>{{ $event->title ?? $currentEvent?->title ?? 'RegRun Portal' }}</span>
             </a>
-            <div class="flex items-center gap-3 text-sm">
-                <a href="{{ route('admin.dashboard') }}" class="text-slate-500 hover:text-slate-800 text-xs font-medium px-2.5 py-1.5 rounded border border-slate-200 hover:bg-slate-50">
-                    Panel Admin &rarr;
-                </a>
-            </div>
         </div>
     </header>
 
