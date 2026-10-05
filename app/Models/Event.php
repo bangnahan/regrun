@@ -24,6 +24,7 @@ class Event extends Model
         'rpc_location',
         'banner_image',
         'custom_domain',
+        'auto_generate_bib',
         'is_active',
         'is_default',
     ];
@@ -32,6 +33,7 @@ class Event extends Model
         'race_date' => 'date',
         'rpc_start_date' => 'date',
         'rpc_end_date' => 'date',
+        'auto_generate_bib' => 'boolean',
         'is_active' => 'boolean',
         'is_default' => 'boolean',
     ];

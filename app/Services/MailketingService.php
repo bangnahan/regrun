@@ -465,7 +465,7 @@ class MailketingService
         $participantsList = '';
         foreach ($transaction->participants as $idx => $p) {
             $num = $idx + 1;
-            $bibText = $p->bib_number ? " &bull; Nomor BIB: <strong style=\"color:#ea580c;font-family:Courier,monospace;\">{$p->bib_number}</strong>" : '';
+            $bibText = $p->bib_number ? " &bull; Nomor BIB: <strong style=\"color:#ea580c;font-family:Courier,monospace;\">{$p->bib_number}</strong>" : ' &bull; Nomor BIB: <span style="color:#b45309;font-weight:bold;">Menyusul (RPC)</span>';
             $participantsList .= "<tr style=\"font-size:12px;color:#334155;\">
                 <td style=\"padding:10px;border-bottom:1px solid #f1f5f9;\">
                     <strong style=\"color:#0f172a;font-size:13px;\">#{$num} {$p->full_name}</strong><br>
@@ -608,7 +608,7 @@ class MailketingService
         $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&amp;data=" . urlencode($participant->ticket_code);
         $orderUrl = route('order.show', ['invoice' => $transaction->invoice_number]);
 
-        $bibDisplay = $participant->bib_number ?: $participant->bib_name;
+        $bibDisplay = $participant->bib_number ?: 'MENYUSUL (RPC)';
 
         return "<!DOCTYPE html>
 <html lang=\"id\">

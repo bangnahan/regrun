@@ -77,13 +77,16 @@ class TripayCallbackController extends Controller
                     $cat->increment('sold_count', $item->quantity);
                 }
 
-                // Generate BIB numbers
-                foreach ($transaction->participants as $p) {
-                    if (!$p->bib_number) {
-                        $codePrefix = substr($p->ticketCategory->code, 0, 2);
-                        $p->update([
-                            'bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
-                        ]);
+                // Generate BIB numbers if auto_generate_bib is enabled
+                $shouldAutoGenerate = $transaction->event?->auto_generate_bib ?? true;
+                if ($shouldAutoGenerate) {
+                    foreach ($transaction->participants as $p) {
+                        if (!$p->bib_number) {
+                            $codePrefix = substr($p->ticketCategory->code, 0, 2);
+                            $p->update([
+                                'bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
+                            ]);
+                        }
                     }
                 }
 

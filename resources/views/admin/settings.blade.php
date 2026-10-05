@@ -232,6 +232,28 @@
             </div>
         </div>
 
+        <!-- General System & BIB Allocation Settings -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100">
+                <span class="text-xl">🎽</span>
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-sm">Pengaturan Nomor BIB Pelari (Global Default)</h3>
+                    <p class="text-[11px] text-slate-500">Tentukan apakah nomor BIB otomatis dibuat saat pembayaran lunas atau ditunda terlebih dahulu.</p>
+                </div>
+            </div>
+
+            <div class="text-xs max-w-lg">
+                <label class="block font-bold text-slate-700 mb-1.5">Kebijakan Penomoran BIB Otomatis</label>
+                <select name="auto_generate_bib" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-semibold text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="1" {{ ($settings['auto_generate_bib'] ?? '1') == '1' ? 'selected' : '' }}>⚡ Otomatis: Langsung buat nomor BIB berurutan saat transaksi lunas</option>
+                    <option value="0" {{ ($settings['auto_generate_bib'] ?? '1') == '0' ? 'selected' : '' }}>⏳ Tunda: Tidak perlu generate BIB dahulu (Dialokasikan manual/massal nanti)</option>
+                </select>
+                <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">
+                    💡 <em>Catatan:</em> Pengaturan ini juga dapat diatur secara spesifik pada masing-masing lomba di menu <strong class="text-slate-600">Manajemen Event</strong>. Jika memilih <strong>Tunda</strong>, nomor BIB pada e-ticket akan bertuliskan "Menyusul" sampai panitia mengklik tombol <em>Generate Nomor BIB</em> di menu <strong>Data Peserta</strong>.
+                </p>
+            </div>
+        </div>
+
         <button type="submit" class="px-6 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs shadow-lg shadow-orange-600/30 transition flex items-center gap-2">
             <span>💾</span>
             <span>Simpan Seluruh Pengaturan</span>

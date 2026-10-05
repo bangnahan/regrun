@@ -54,13 +54,16 @@ class OrderController extends Controller
             $cat->increment('sold_count', $item->quantity);
         }
 
-        // Assign BIB numbers to participants if not assigned
-        foreach ($transaction->participants as $idx => $p) {
-            if (!$p->bib_number) {
-                $codePrefix = substr($p->ticketCategory->code, 0, 2);
-                $p->update([
-                    'bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
-                ]);
+        // Assign BIB numbers to participants if auto_generate_bib is enabled
+        $shouldAutoGenerate = $transaction->event?->auto_generate_bib ?? true;
+        if ($shouldAutoGenerate) {
+            foreach ($transaction->participants as $idx => $p) {
+                if (!$p->bib_number) {
+                    $codePrefix = substr($p->ticketCategory->code, 0, 2);
+                    $p->update([
+                        'bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
+                    ]);
+                }
             }
         }
 

@@ -80,6 +80,16 @@
                                 </span>
                             @endif
 
+                            @if($ev->auto_generate_bib)
+                                <span class="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold" title="BIB digenerate otomatis begitu pembayaran lunas">
+                                    ⚡ BIB: Otomatis
+                                </span>
+                            @else
+                                <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold" title="BIB tidak digenerate saat pendaftaran (dialokasikan nanti)">
+                                    ⏳ BIB: Tunda (Manual Nanti)
+                                </span>
+                            @endif
+
                             <span class="text-[11px] text-slate-500 font-medium">
                                 ({{ $ev->transactions_count }} Transaksi &bull; {{ $ev->participants_count }} Peserta)
                             </span>
@@ -222,6 +232,15 @@
                         <div class="sm:col-span-4">
                             <label class="block font-bold text-slate-700 mb-1">Deskripsi Singkat / Catatan Event</label>
                             <textarea name="description" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs" placeholder="Deskripsi informasi event untuk peserta...">{{ $ev->description }}</textarea>
+                        </div>
+
+                        <div class="sm:col-span-4 bg-white p-3.5 rounded-xl border border-slate-200">
+                            <label class="block font-bold text-slate-800 mb-1">Pengaturan Penomoran Nomor BIB Peserta</label>
+                            <select name="auto_generate_bib" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-semibold text-slate-800 text-xs">
+                                <option value="1" {{ $ev->auto_generate_bib ? 'selected' : '' }}>⚡ Otomatis: Generate nomor BIB langsung saat transaksi lunas (Rekomendasi)</option>
+                                <option value="0" {{ !$ev->auto_generate_bib ? 'selected' : '' }}>⏳ Tunda: Tidak perlu generate BIB dahulu (Akan dialokasikan panitia nanti / saat RPC)</option>
+                            </select>
+                            <p class="text-[11px] text-slate-400 mt-1">Jika memilih <strong>Tunda</strong>, nomor BIB pada e-ticket/invoice akan bertuliskan "Menyusul" sampai panitia mengalokasikan nomor BIB massal di menu Data Peserta.</p>
                         </div>
 
                         <div class="sm:col-span-4 flex items-center gap-6 pt-2">
@@ -454,8 +473,11 @@
                     </div>
 
                     <div class="sm:col-span-2">
-                        <label class="block font-bold text-slate-700 mb-1">Deskripsi Event</label>
-                        <textarea name="description" rows="2" placeholder="Informasi singkat seputar event lari..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs"></textarea>
+                        <label class="block font-bold text-slate-700 mb-1">Pengaturan Nomor BIB</label>
+                        <select name="auto_generate_bib" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-semibold text-slate-800 text-xs">
+                            <option value="1" selected>⚡ Otomatis: Generate nomor BIB langsung saat transaksi lunas (Rekomendasi)</option>
+                            <option value="0">⏳ Tunda: Tidak perlu generate BIB dahulu (Dialokasikan nanti / saat RPC)</option>
+                        </select>
                     </div>
 
                     <div class="sm:col-span-2 space-y-2 pt-1">

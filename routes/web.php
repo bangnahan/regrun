@@ -50,6 +50,8 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     // Manajemen Peserta
     Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
     Route::post('/participants/{id}/toggle-rpc', [AdminController::class, 'toggleRacepack'])->name('participants.toggle_rpc');
+    Route::post('/participants/generate-bibs', [AdminController::class, 'generateBibs'])->name('participants.generate_bibs');
+    Route::post('/participants/{id}/bib', [AdminController::class, 'updateParticipantBib'])->name('participants.update_bib');
     Route::get('/participants/export', [AdminController::class, 'exportParticipantsCsv'])->name('participants.export');
 
     // Manajemen Event & Kuota/Early Bird

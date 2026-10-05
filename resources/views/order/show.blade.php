@@ -156,7 +156,13 @@
                             <div class="grid grid-cols-3 gap-2 pt-1">
                                 <div>
                                     <span class="text-slate-400 block text-[11px]">Nomor BIB</span>
-                                    <span class="font-mono font-bold text-slate-800">{{ $p->bib_number ?? 'Auto Generate' }}</span>
+                                    <span class="font-mono font-bold text-slate-800">
+                                        @if($p->bib_number)
+                                            {{ $p->bib_number }}
+                                        @else
+                                            <span class="text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded text-[10px] font-bold">Menyusul (Diberikan saat RPC)</span>
+                                        @endif
+                                    </span>
                                 </div>
                                 <div>
                                     <span class="text-slate-400 block text-[11px]">Ukuran Jersey</span>

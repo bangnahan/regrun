@@ -222,10 +222,13 @@ class AdminController extends Controller
                 $cat->increment('sold_count', $item->quantity);
             }
 
-            foreach ($transaction->participants as $p) {
-                if (!$p->bib_number) {
-                    $codePrefix = substr($p->ticketCategory->code, 0, 2);
-                    $p->update(['bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT)]);
+            $shouldAutoGenerate = $transaction->event?->auto_generate_bib ?? true;
+            if ($shouldAutoGenerate) {
+                foreach ($transaction->participants as $p) {
+                    if (!$p->bib_number) {
+                        $codePrefix = substr($p->ticketCategory->code, 0, 2);
+                        $p->update(['bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT)]);
+                    }
                 }
             }
 
@@ -293,9 +296,9 @@ class AdminController extends Controller
         $participants = $query->paginate(25)->withQueryString();
         $events = Event::all();
         $categories = TicketCategory::all();
-        $jerseySizes = JerseySize::orderBy('sort_order')->get();
+        $unassignedBibCount = Participant::whereHas('transaction', fn($q) => $q->where('status', 'PAID'))->whereNull('bib_number')->count();
 
-        return view('admin.participants', compact('participants', 'events', 'categories', 'jerseySizes'));
+        return view('admin.participants', compact('participants', 'events', 'categories', 'jerseySizes', 'unassignedBibCount'));
     }
 
     /**
@@ -313,6 +316,54 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', "Status pengambilan racepack untuk {$participant->full_name} berhasil diperbarui.");
+    }
+
+    /**
+     * Bulk generate BIB numbers for participants without a BIB number
+     */
+    public function generateBibs(Request $request)
+    {
+        $eventId = $request->input('event_id');
+
+        $query = Participant::whereHas('transaction', function ($q) {
+            $q->where('status', 'PAID');
+        })->whereNull('bib_number');
+
+        if ($eventId) {
+            $query->whereHas('transaction', function ($q) use ($eventId) {
+                $q->where('event_id', $eventId);
+            });
+        }
+
+        $participants = $query->with('ticketCategory')->get();
+        $count = 0;
+
+        foreach ($participants as $p) {
+            $codePrefix = substr($p->ticketCategory->code, 0, 2);
+            $p->update([
+                'bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
+            ]);
+            $count++;
+        }
+
+        return back()->with('success', "Berhasil mengalokasikan nomor BIB untuk {$count} peserta.");
+    }
+
+    /**
+     * Manually update a single participant's BIB number
+     */
+    public function updateParticipantBib(Request $request, int $id)
+    {
+        $participant = Participant::findOrFail($id);
+
+        $request->validate([
+            'bib_number' => 'nullable|string|max:20',
+        ]);
+
+        $bib = $request->filled('bib_number') ? strtoupper(trim($request->bib_number)) : null;
+        $participant->update(['bib_number' => $bib]);
+
+        return back()->with('success', "Nomor BIB peserta '{$participant->full_name}' berhasil disimpan: " . ($bib ?: '(Dikosongkan)'));
     }
 
     /**
@@ -435,6 +486,7 @@ class AdminController extends Controller
             'rpc_location' => $request->rpc_location,
             'custom_domain' => $request->custom_domain ? trim(str_replace(['http://', 'https://'], '', $request->custom_domain), '/') : null,
             'description' => $request->description,
+            'auto_generate_bib' => $request->boolean('auto_generate_bib', true),
             'is_active' => $request->boolean('is_active', true),
             'is_default' => $isDefault,
         ]);
@@ -513,6 +565,7 @@ class AdminController extends Controller
             'rpc_location' => $request->rpc_location,
             'custom_domain' => $request->custom_domain ? trim(str_replace(['http://', 'https://'], '', $request->custom_domain), '/') : null,
             'description' => $request->description,
+            'auto_generate_bib' => $request->boolean('auto_generate_bib'),
             'is_active' => $request->boolean('is_active'),
             'is_default' => $isDefault,
         ]);
@@ -646,6 +699,7 @@ class AdminController extends Controller
             'mailketing_api_token' => SystemSetting::get('mailketing_api_token', env('MAILKETING_API_TOKEN', '')),
             'mailketing_sender_email' => SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')),
             'mailketing_sender_name' => SystemSetting::get('mailketing_sender_name', env('MAILKETING_SENDER_NAME', 'Panitia Event Lari')),
+            'auto_generate_bib' => SystemSetting::get('auto_generate_bib', '1'),
         ];
 
         $tripayStatus = $this->tripayService->testConnection();
@@ -688,11 +742,12 @@ class AdminController extends Controller
             'mailketing_api_token',
             'mailketing_sender_email',
             'mailketing_sender_name',
+            'auto_generate_bib',
         ];
 
         foreach ($keys as $k) {
             if ($request->has($k)) {
-                $group = str_starts_with($k, 'tripay') ? 'tripay' : 'mailketing';
+                $group = str_starts_with($k, 'tripay') ? 'tripay' : (str_starts_with($k, 'mailketing') ? 'mailketing' : 'general');
                 SystemSetting::set($k, $request->input($k), $group);
             }
         }

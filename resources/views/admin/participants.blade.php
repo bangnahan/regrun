@@ -56,6 +56,31 @@
         </form>
     </div>
 
+    <!-- Alert Banner: Unassigned BIBs -->
+    @if(!empty($unassignedBibCount) && $unassignedBibCount > 0)
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl shrink-0">⏳</span>
+                <div>
+                    <h4 class="font-extrabold text-amber-900 text-sm">Terdapat {{ $unassignedBibCount }} Pelari yang Belum Memiliki Nomor BIB</h4>
+                    <p class="text-xs text-amber-700 mt-0.5">Peserta mendaftar saat mode "Tunda/Manual BIB" aktif. Anda dapat men-generate nomor BIB secara otomatis sekarang atau mengisinya secara manual.</p>
+                </div>
+            </div>
+            <form action="{{ route('admin.participants.generate_bibs') }}" method="POST">
+                @csrf
+                @if(request('event_id'))
+                    <input type="hidden" name="event_id" value="{{ request('event_id') }}">
+                @endif
+                <button type="submit" 
+                        onclick="return confirm('Alokasikan nomor BIB otomatis untuk {{ $unassignedBibCount }} peserta ini?')" 
+                        class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs rounded-xl shadow-md shadow-amber-600/20 transition flex items-center gap-1.5 shrink-0">
+                    <span>⚡</span>
+                    <span>Generate Nomor BIB Sekarang</span>
+                </button>
+            </form>
+        </div>
+    @endif
+
     <!-- Table -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
@@ -75,9 +100,43 @@
                 <tbody class="divide-y divide-slate-100 font-medium">
                     @forelse($participants as $p)
                         <tr class="hover:bg-slate-50/80 transition">
-                            <td class="p-4">
-                                <div class="font-mono font-black text-sm text-slate-900">{{ $p->bib_number ?? '-' }}</div>
-                                <div class="font-mono text-[10px] text-slate-400">{{ $p->ticket_code }}</div>
+                            <td class="p-4" x-data="{ editingBib: false, bibInput: '{{ $p->bib_number }}' }">
+                                <div x-show="!editingBib" class="flex items-center gap-1.5">
+                                    @if($p->bib_number)
+                                        <span class="font-mono font-black text-sm text-slate-900">{{ $p->bib_number }}</span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                            Belum Ada BIB
+                                        </span>
+                                    @endif
+                                    <button type="button" 
+                                            @click="editingBib = true" 
+                                            class="text-slate-400 hover:text-slate-600 text-xs transition" 
+                                            title="Edit Nomor BIB">
+                                        ✏️
+                                    </button>
+                                </div>
+
+                                <!-- Inline edit form -->
+                                <form x-show="editingBib" 
+                                      action="{{ route('admin.participants.update_bib', ['id' => $p->id]) }}" 
+                                      method="POST" 
+                                      class="flex items-center gap-1 mt-1">
+                                    @csrf
+                                    <input type="text" 
+                                           name="bib_number" 
+                                           x-model="bibInput" 
+                                           placeholder="No BIB..." 
+                                           class="w-24 px-2 py-1 text-xs font-mono font-bold rounded border border-slate-300 focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                    <button type="submit" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded">
+                                        ✓
+                                    </button>
+                                    <button type="button" @click="editingBib = false" class="px-1.5 py-1 bg-slate-200 text-slate-600 text-[10px] rounded">
+                                        ✕
+                                    </button>
+                                </form>
+
+                                <div class="font-mono text-[10px] text-slate-400 mt-0.5">{{ $p->ticket_code }}</div>
                             </td>
                             <td class="p-4">
                                 <div class="font-bold text-slate-900 text-sm">{{ $p->full_name }}</div>
