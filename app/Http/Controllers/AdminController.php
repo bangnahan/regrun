@@ -9,6 +9,7 @@ use App\Models\SystemSetting;
 use App\Models\TicketCategory;
 use App\Models\Transaction;
 use App\Services\MailketingService;
+use App\Services\TripayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,10 +18,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class AdminController extends Controller
 {
     protected MailketingService $mailketingService;
+    protected TripayService $tripayService;
 
-    public function __construct(MailketingService $mailketingService)
+    public function __construct(MailketingService $mailketingService, TripayService $tripayService)
     {
         $this->mailketingService = $mailketingService;
+        $this->tripayService = $tripayService;
     }
 
     /**
@@ -427,7 +430,9 @@ class AdminController extends Controller
             'mailketing_sender_name' => SystemSetting::get('mailketing_sender_name', env('MAILKETING_SENDER_NAME', 'Panitia Event Lari')),
         ];
 
-        return view('admin.settings', compact('settings'));
+        $tripayStatus = $this->tripayService->testConnection();
+
+        return view('admin.settings', compact('settings', 'tripayStatus'));
     }
 
     /**
@@ -451,6 +456,9 @@ class AdminController extends Controller
                 SystemSetting::set($k, $request->input($k), $group);
             }
         }
+
+        // Invalidate payment channel cache so changes apply immediately
+        cache()->flush();
 
         return back()->with('success', 'Pengaturan sistem berhasil disimpan.');
     }

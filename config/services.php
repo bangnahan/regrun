@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'tripay' => [
+        'merchant_code' => env('TRIPAY_MERCHANT_CODE', 'T39430'),
+        'api_key' => env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi'),
+        'private_key' => env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280'),
+        'sandbox' => env('TRIPAY_SANDBOX', true),
+    ],
+
 ];

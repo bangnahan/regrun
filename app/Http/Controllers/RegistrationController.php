@@ -270,22 +270,24 @@ class RegistrationController extends Controller
         // 5. Call Tripay to generate closed transaction
         $tripayResult = $this->tripayService->createTransaction($transaction, $request->payment_method);
 
-        if ($tripayResult['success']) {
-            $transaction->update([
-                'tripay_reference' => $tripayResult['reference'],
-                'tripay_checkout_url' => $tripayResult['checkout_url'],
-                'tripay_pay_code' => $tripayResult['pay_code'],
-                'tripay_qr_url' => $tripayResult['qr_url'],
-                'fee_amount' => $tripayResult['fee'],
-                'grand_total' => $transaction->subtotal + $tripayResult['fee'],
-                'expires_at' => $tripayResult['expires_at'],
-            ]);
+        if (empty($tripayResult['success'])) {
+            return back()->with('error', 'Gagal menghubungi Tripay: ' . ($tripayResult['message'] ?? 'Silakan coba metode pembayaran lain atau hubungi panitia.'));
         }
+
+        $transaction->update([
+            'tripay_reference' => $tripayResult['reference'] ?? null,
+            'tripay_checkout_url' => $tripayResult['checkout_url'] ?? null,
+            'tripay_pay_code' => $tripayResult['pay_code'] ?? null,
+            'tripay_qr_url' => $tripayResult['qr_url'] ?? null,
+            'fee_amount' => $tripayResult['fee'] ?? 0,
+            'grand_total' => $tripayResult['amount'] ?? ($transaction->subtotal + ($tripayResult['fee'] ?? 0)),
+            'expires_at' => $tripayResult['expires_at'] ?? now()->addMinutes(120),
+        ]);
 
         // Clear registration sessions
         session()->forget(['registration_tickets', 'registration_participants', 'registration_event_id']);
 
-        // Redirect to order page with instructions or Tripay hosted checkout
+        // Redirect to Tripay hosted checkout page if available
         if (!empty($tripayResult['checkout_url']) && empty($tripayResult['is_mock'])) {
             return redirect()->away($tripayResult['checkout_url']);
         }
