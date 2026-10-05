@@ -243,6 +243,68 @@
                             <p class="text-[11px] text-slate-400 mt-1">Jika memilih <strong>Tunda</strong>, nomor BIB pada e-ticket/invoice akan bertuliskan "Menyusul" sampai panitia mengalokasikan nomor BIB massal di menu Data Peserta.</p>
                         </div>
 
+                        <!-- Branding & Appearance -->
+                        <div class="sm:col-span-2">
+                            <label class="block font-bold text-slate-700 mb-1">Logo Event URL</label>
+                            <input type="text" name="logo_url" value="{{ $ev->logo_url }}" placeholder="https://domain.com/logo.png" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block font-bold text-slate-700 mb-1">Warna Aksen Brand (Hex Code)</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" name="primary_color" value="{{ $ev->primary_color ?: '#ea580c' }}" class="w-10 h-9 p-1 rounded-lg border border-slate-300 cursor-pointer">
+                                <input type="text" value="{{ $ev->primary_color ?: '#ea580c' }}" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Optional Custom Gateway Credentials Accordion -->
+                        <div class="sm:col-span-4 p-4 rounded-xl bg-white border border-slate-200" x-data="{ openCreds: {{ ($ev->tripay_merchant_code || $ev->mailketing_api_token) ? 'true' : 'false' }} }">
+                            <div class="flex items-center justify-between cursor-pointer" @click="openCreds = !openCreds">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">🔐</span>
+                                    <div>
+                                        <span class="font-extrabold text-xs text-slate-800">Kredensial Gateway &amp; Notifikasi Khusus Event (Opsional)</span>
+                                        <p class="text-[11px] text-slate-400">Kosongkan jika ingin menggunakan akun Tripay &amp; Mailketing utama sistem.</p>
+                                    </div>
+                                </div>
+                                <button type="button" class="text-xs font-bold text-orange-600 hover:text-orange-700">
+                                    <span x-text="openCreds ? 'Tutup ▲' : 'Buka Pengaturan Gateway Khusus ▼'"></span>
+                                </button>
+                            </div>
+
+                            <div x-show="openCreds" x-collapse class="mt-4 pt-3 border-t border-slate-100 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Tripay Merchant Code</label>
+                                        <input type="text" name="tripay_merchant_code" value="{{ $ev->tripay_merchant_code }}" placeholder="T..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Tripay API Key</label>
+                                        <input type="password" name="tripay_api_key" value="{{ $ev->tripay_api_key }}" placeholder="Khusus event ini" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Tripay Private Key</label>
+                                        <input type="password" name="tripay_private_key" value="{{ $ev->tripay_private_key }}" placeholder="Khusus event ini" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Mailketing API Token</label>
+                                        <input type="password" name="mailketing_api_token" value="{{ $ev->mailketing_api_token }}" placeholder="Token khusus organizer" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Sender Email</label>
+                                        <input type="email" name="mailketing_sender_email" value="{{ $ev->mailketing_sender_email }}" placeholder="panitia@event.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Sender Name</label>
+                                        <input type="text" name="mailketing_sender_name" value="{{ $ev->mailketing_sender_name }}" placeholder="Panitia Race" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="sm:col-span-4 flex items-center gap-6 pt-2">
                             <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
                                 <input type="checkbox" name="is_active" value="1" {{ $ev->is_active ? 'checked' : '' }} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-orange-500">
@@ -265,6 +327,102 @@
                         </button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Multi-Domain Management Section (CloudPanel Integration) -->
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50" x-data="{ showAddDomain: false }">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div>
+                        <h4 class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                            <span>🌐</span> Domain &amp; Subdomain Terhubung (CloudPanel Multi-Domain)
+                        </h4>
+                        <p class="text-xs text-slate-500">Daftar domain/subdomain yang otomatis diarahkan ke pendaftaran event ini.</p>
+                    </div>
+                    <button type="button" 
+                            @click="showAddDomain = !showAddDomain" 
+                            class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                        <span>➕</span>
+                        <span x-text="showAddDomain ? 'Batal' : 'Tambah Domain Alias'"></span>
+                    </button>
+                </div>
+
+                <!-- Form Add Domain Alias -->
+                <div x-show="showAddDomain" x-collapse class="mb-4 p-4 rounded-xl bg-white border border-slate-200">
+                    <form action="{{ route('admin.events.domains.store', ['id' => $ev->id]) }}" method="POST" class="space-y-3">
+                        @csrf
+                        <div class="flex flex-col sm:flex-row items-center gap-3">
+                            <div class="flex-1 w-full">
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">Nama Domain / Subdomain Baru</label>
+                                <input type="text" 
+                                       name="domain" 
+                                       required 
+                                       placeholder="contoh: tiket.marathonjakarta.id atau marathonjakarta.id" 
+                                       class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                            </div>
+                            <div class="flex items-center gap-2 pt-4 sm:pt-6">
+                                <label class="flex items-center gap-1.5 text-xs text-slate-700 font-bold cursor-pointer">
+                                    <input type="checkbox" name="is_primary" value="1" class="rounded text-orange-600">
+                                    <span>Jadikan Domain Utama</span>
+                                </label>
+                            </div>
+                            <div class="pt-4 sm:pt-6">
+                                <button type="submit" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-lg transition shadow-sm">
+                                    Hubungkan Domain
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400">
+                            💡 <em>Langkah CloudPanel:</em> Setelah menambahkan domain di sini, pastikan domain tersebut sudah didaftarkan pada tab <strong>Domain Names</strong> di site CloudPanel Anda dan SSL Let's Encrypt sudah diterbitkan.
+                        </p>
+                    </form>
+                </div>
+
+                <!-- Domain List Table / Cards -->
+                @if($ev->domains->isEmpty() && empty($ev->custom_domain))
+                    <div class="p-3 bg-white rounded-xl border border-dashed border-slate-300 text-center text-xs text-slate-400">
+                        Belum ada domain khusus. Event ini diakses via slug: <code class="font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">/event/{{ $ev->slug }}</code> atau domain default portal.
+                    </div>
+                @else
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($ev->domains as $dom)
+                            <div class="p-2.5 px-3 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center gap-3 text-xs">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full {{ $dom->is_active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300' }}"></span>
+                                    <a href="https://{{ $dom->domain }}" target="_blank" class="font-mono font-bold text-slate-900 hover:text-orange-600 hover:underline">
+                                        {{ $dom->domain }} ↗
+                                    </a>
+                                </div>
+
+                                @if($dom->is_primary)
+                                    <span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-[10px] font-black tracking-wide border border-orange-200">
+                                        PRIMARY
+                                    </span>
+                                @else
+                                    <form action="{{ route('admin.events.domains.set_primary', ['id' => $dom->id]) }}" method="POST" class="inline">
+                                        @csrf
+                                        <button type="submit" class="text-[10px] font-bold text-slate-500 hover:text-orange-600 hover:underline">
+                                            Jadikan Utama
+                                        </button>
+                                    </form>
+                                @endif
+
+                                <form action="{{ route('admin.events.domains.delete', ['id' => $dom->id]) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" onclick="return confirm('Hapus domain {{ $dom->domain }}?')" class="text-rose-500 hover:text-rose-700 text-xs font-bold" title="Hapus Domain">
+                                        &times;
+                                    </button>
+                                </form>
+                            </div>
+                        @endforeach
+
+                        @if($ev->custom_domain && !$ev->domains->contains('domain', $ev->custom_domain))
+                            <div class="p-2.5 px-3 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center gap-2 text-xs">
+                                <span class="font-mono font-bold text-slate-800">{{ $ev->custom_domain }}</span>
+                                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">LEGACY PRIMARY</span>
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <!-- Categories Section for This Event -->

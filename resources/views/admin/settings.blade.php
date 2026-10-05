@@ -142,53 +142,188 @@
     <form action="{{ route('admin.settings.save') }}" method="POST" class="space-y-6">
         @csrf
 
-        <!-- Tripay Settings Box -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <div class="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100">
-                <span class="text-xl">💳</span>
+        <!-- Tripay Settings Box with Separate Sandbox vs Production Schema -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm" x-data="{ 
+            selectedMode: '{{ $settings['tripay_mode'] }}', 
+            viewTab: '{{ $settings['tripay_mode'] }}' 
+        }">
+            <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-100 flex-wrap gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">💳</span>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Pengaturan Payment Gateway Tripay</h3>
+                        <p class="text-[11px] text-slate-500">Pemisahan skema kredensial Sandbox (Testing) dan Live Produksi.</p>
+                    </div>
+                </div>
+
+                <!-- Mode Indicator Badge -->
                 <div>
-                    <h3 class="font-extrabold text-slate-900 text-sm">Pengaturan Kredensial Tripay</h3>
-                    <p class="text-[11px] text-slate-500">Dapatkan API Key &amp; Private Key dari Dashboard Merchant Tripay.</p>
+                    <template x-if="selectedMode === 'production'">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800 border border-rose-200">
+                            <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                            MODE LIVE PRODUKSI
+                        </span>
+                    </template>
+                    <template x-if="selectedMode === 'sandbox'">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800 border border-amber-200">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            MODE SANDBOX (TESTING)
+                        </span>
+                    </template>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kode Merchant</label>
-                    <input type="text" name="tripay_merchant_code" value="{{ $settings['tripay_merchant_code'] }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <!-- Active Mode Switcher -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-6">
+                <label class="block font-extrabold text-slate-900 text-xs mb-2">Pilih Lingkungan Aktif Gateway:</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label :class="selectedMode === 'sandbox' ? 'border-amber-500 bg-amber-50/60 ring-2 ring-amber-400/30' : 'border-slate-200 bg-white hover:border-slate-300'" 
+                           class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition">
+                        <input type="radio" name="tripay_mode" value="sandbox" x-model="selectedMode" class="mt-0.5 text-amber-600 focus:ring-amber-500">
+                        <div>
+                            <div class="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                                <span>🧪</span> Mode Sandbox (Testing)
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Uji coba simulasi pembayaran tanpa uang nyata. Menggunakan kanal QRIS simulator dan endpoint sandbox Tripay.</p>
+                        </div>
+                    </label>
+
+                    <label :class="selectedMode === 'production' ? 'border-rose-500 bg-rose-50/60 ring-2 ring-rose-400/30' : 'border-slate-200 bg-white hover:border-slate-300'" 
+                           class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition">
+                        <input type="radio" name="tripay_mode" value="production" x-model="selectedMode" class="mt-0.5 text-rose-600 focus:ring-rose-500">
+                        <div>
+                            <div class="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                                <span>🔴</span> Mode Live Produksi
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Transaksi resmi menggunakan uang riil nasabah. Terhubung ke QRIS Nasional &amp; Virtual Account Bank resmi.</p>
+                        </div>
+                    </label>
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Mode Sandbox (Testing)</label>
-                    <select name="tripay_sandbox" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500">
-                        <option value="1" {{ $settings['tripay_sandbox'] ? 'selected' : '' }}>Aktif (Sandbox / Testing)</option>
-                        <option value="0" {{ !$settings['tripay_sandbox'] ? 'selected' : '' }}>Nonaktif (Production / Live)</option>
-                    </select>
-                </div>
-
-                <div class="sm:col-span-2">
-                    <label class="block font-bold text-slate-700 mb-1">API Key</label>
-                    <input type="text" name="tripay_api_key" value="{{ $settings['tripay_api_key'] }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
-                </div>
-
-                <div class="sm:col-span-2">
-                    <label class="block font-bold text-slate-700 mb-1">Private Key</label>
-                    <input type="text" name="tripay_private_key" value="{{ $settings['tripay_private_key'] }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <!-- Alert Warning Banner for Production -->
+                <div x-show="selectedMode === 'production'" x-collapse class="mt-3 p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-800">
+                    <strong>⚠️ PERINGATAN KEAMANAN PRODUKSI:</strong>
+                    <p class="text-[11px] text-rose-700 mt-0.5">
+                        Dalam mode Produksi, fitur simulasi bayar otomatis DIBLOKIR. Pastikan Merchant Code, API Key, dan Private Key produksi di bawah ini sudah sesuai dengan dashboard Tripay resmi Anda (<a href="https://tripay.co.id" target="_blank" class="underline font-bold">tripay.co.id</a>).
+                    </p>
                 </div>
             </div>
 
-            <div class="mt-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <!-- Tab Navigation to Edit Sandbox vs Production Credentials Independently -->
+            <div class="flex items-center gap-2 border-b border-slate-200 mb-4 pb-2">
+                <button type="button" 
+                        @click="viewTab = 'sandbox'" 
+                        :class="viewTab === 'sandbox' ? 'border-amber-500 text-amber-800 bg-amber-50/70 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
+                        class="px-3.5 py-1.5 rounded-lg text-xs border transition flex items-center gap-1.5">
+                    <span>🧪</span>
+                    <span>Kredensial Sandbox</span>
+                    <span x-show="selectedMode === 'sandbox'" class="text-[9px] bg-amber-200 text-amber-900 px-1 rounded font-black">AKTIF</span>
+                </button>
+                <button type="button" 
+                        @click="viewTab = 'production'" 
+                        :class="viewTab === 'production' ? 'border-rose-500 text-rose-800 bg-rose-50/70 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
+                        class="px-3.5 py-1.5 rounded-lg text-xs border transition flex items-center gap-1.5">
+                    <span>🔴</span>
+                    <span>Kredensial Produksi (Live)</span>
+                    <span x-show="selectedMode === 'production'" class="text-[9px] bg-rose-200 text-rose-900 px-1 rounded font-black">AKTIF</span>
+                </button>
+            </div>
+
+            <!-- Panel 1: Sandbox Credentials -->
+            <div x-show="viewTab === 'sandbox'" class="space-y-4">
+                <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
+                    <div>
+                        <strong>Skema Sandbox:</strong> Endpoint API: <code class="bg-white px-2 py-0.5 rounded font-mono text-[11px] border border-amber-200">https://tripay.co.id/api-sandbox/</code>
+                    </div>
+                    <span class="text-[10px] text-amber-700 font-bold">Kanal QRIS: QRIS2</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Merchant Code (Sandbox)</label>
+                        <input type="text" name="tripay_sandbox_merchant_code" value="{{ $settings['tripay_sandbox_merchant_code'] }}" placeholder="T39430" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="hidden sm:block"></div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">API Key (Sandbox - Prefix DEV-...)</label>
+                        <input type="text" name="tripay_sandbox_api_key" value="{{ $settings['tripay_sandbox_api_key'] }}" placeholder="DEV-..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">Private Key (Sandbox)</label>
+                        <input type="password" name="tripay_sandbox_private_key" value="{{ $settings['tripay_sandbox_private_key'] }}" placeholder="yNQJm-..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 2: Production Credentials -->
+            <div x-show="viewTab === 'production'" class="space-y-4">
+                <div class="p-3 bg-rose-50/50 rounded-xl border border-rose-200 text-xs text-rose-900 flex items-center justify-between">
+                    <div>
+                        <strong>Skema Live Produksi:</strong> Endpoint API: <code class="bg-white px-2 py-0.5 rounded font-mono text-[11px] border border-rose-200">https://tripay.co.id/api/</code>
+                    </div>
+                    <span class="text-[10px] text-rose-700 font-bold">Kanal QRIS: QRIS Nasional</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Merchant Code (Produksi)</label>
+                        <input type="text" name="tripay_prod_merchant_code" value="{{ $settings['tripay_prod_merchant_code'] }}" placeholder="T..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    </div>
+                    <div class="hidden sm:block"></div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">API Key (Produksi Live)</label>
+                        <input type="text" name="tripay_prod_api_key" value="{{ $settings['tripay_prod_api_key'] }}" placeholder="Masukkan API Key Live dari Tripay" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold text-slate-700 mb-1">Private Key (Produksi Live)</label>
+                        <input type="password" name="tripay_prod_private_key" value="{{ $settings['tripay_prod_private_key'] }}" placeholder="Masukkan Private Key Live dari Tripay" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Webhook Info Box -->
+            <div class="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                    <strong class="font-bold text-slate-900">URL Callback Webhook untuk Tripay Dashboard:</strong>
+                    <strong class="font-bold text-slate-900">URL Callback Webhook Resmi untuk Dashboard Tripay:</strong>
                     <div class="mt-1">
                         <code class="font-mono text-orange-600 bg-white px-2.5 py-1 rounded border border-slate-200 text-xs inline-block" id="webhook_url">{{ url('/api/tripay/callback') }}</code>
                     </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Masukkan URL ini di menu Pengaturan &gt; Webhook Callback pada dashboard Tripay Anda (baik Sandbox maupun Produksi).</p>
                 </div>
                 <button type="button" 
                         onclick="navigator.clipboard.writeText(document.getElementById('webhook_url').innerText); alert('URL Callback Webhook berhasil disalin!');" 
-                        class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-lg border border-slate-300 shadow-sm transition">
-                    📋 Salin URL
+                        class="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-lg border border-slate-300 shadow-sm transition shrink-0">
+                    📋 Salin URL Webhook
                 </button>
+            </div>
+
+            <!-- Pre-Live Production Security Checklist -->
+            <div class="mt-4 p-4 rounded-xl bg-slate-900 text-white text-xs">
+                <div class="font-extrabold text-sm text-emerald-400 flex items-center gap-1.5 mb-2">
+                    <span>🛡️</span> Checklist Keamanan Sebelum Live Production:
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-emerald-400">✓</span>
+                        <span>Simulasi pembayaran otomatis diblokir di mode Produksi</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-emerald-400">✓</span>
+                        <span>Verifikasi Signature Webhook HMAC-SHA256 aktif</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-emerald-400">✓</span>
+                        <span>Rate Limiting Anti-Spam aktif pada rute pendaftaran &amp; bayar</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-emerald-400">✓</span>
+                        <span>Pessimistic Locking aktif mencegah tiket *overselling*</span>
+                    </div>
+                </div>
             </div>
         </div>
 

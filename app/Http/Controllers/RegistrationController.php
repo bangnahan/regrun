@@ -53,6 +53,19 @@ class RegistrationController extends Controller
         ]);
 
         $event = Event::findOrFail($request->event_id);
+
+        // Security & Tenant Isolation: Validate that if domain is bound to an event, event_id must match
+        $currentEvent = $request->attributes->get('currentEvent') ?? (app()->bound('currentEvent') ? app('currentEvent') : null);
+        if ($currentEvent && (int) $request->event_id !== (int) $currentEvent->id) {
+            $cleanHost = \App\Models\EventDomain::normalizeDomain($request->getHost());
+            $isDedicatedDomain = \App\Models\EventDomain::where('domain', $cleanHost)->exists()
+                || \App\Models\Event::where('custom_domain', $cleanHost)->exists();
+
+            if ($isDedicatedDomain) {
+                abort(403, 'Akses ditolak: ID Event (' . $request->event_id . ') tidak sesuai dengan domain resmi event ini (' . $currentEvent->title . ').');
+            }
+        }
+
         $ticketsInput = $request->tickets; // [category_id => quantity]
 
         $selectedTickets = [];
@@ -173,6 +186,7 @@ class RegistrationController extends Controller
             foreach ($selectedTickets as $item) {
                 $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
                 $category = TicketCategory::where('id', $catId)
+                    ->where('event_id', $event->id)
                     ->lockForUpdate()
                     ->firstOrFail();
 
@@ -263,6 +277,12 @@ class RegistrationController extends Controller
         $tripayResult = $this->tripayService->createTransaction($transaction, $request->payment_method);
 
         if (empty($tripayResult['success'])) {
+            // SECURITY & INVENTORY INTEGRITY: Release reserved quota immediately so tickets are not locked
+            foreach ($transaction->items as $item) {
+                $item->ticketCategory->decrement('reserved_count', $item->quantity);
+            }
+            $transaction->update(['status' => 'FAILED']);
+
             return back()->with('error', 'Gagal menghubungi Tripay: ' . ($tripayResult['message'] ?? 'Silakan coba metode pembayaran lain atau hubungi panitia.'));
         }
 

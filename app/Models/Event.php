@@ -23,10 +23,20 @@ class Event extends Model
         'rpc_end_date',
         'rpc_location',
         'banner_image',
+        'logo_url',
+        'primary_color',
+        'secondary_color',
+        'custom_css',
         'custom_domain',
         'auto_generate_bib',
         'is_active',
         'is_default',
+        'tripay_merchant_code',
+        'tripay_api_key',
+        'tripay_private_key',
+        'mailketing_api_token',
+        'mailketing_sender_email',
+        'mailketing_sender_name',
     ];
 
     protected $casts = [
@@ -53,20 +63,144 @@ class Event extends Model
         return $this->hasManyThrough(Participant::class, Transaction::class);
     }
 
-    public static function getActiveEvent(?string $slug = null, ?string $domain = null): ?self
+    public function domains(): HasMany
     {
-        if ($slug) {
-            return self::where('slug', $slug)->where('is_active', true)->first();
+        return $this->hasMany(EventDomain::class)->orderByDesc('is_primary');
+    }
+
+    /**
+     * Get the primary domain for this event
+     */
+    public function getPrimaryDomain(): ?string
+    {
+        $primary = $this->domains()->where('is_primary', true)->where('is_active', true)->first();
+        if ($primary) {
+            return $primary->domain;
         }
 
-        if ($domain) {
-            $byDomain = self::where('custom_domain', $domain)->where('is_active', true)->first();
-            if ($byDomain) {
-                return $byDomain;
+        if ($this->custom_domain) {
+            return $this->custom_domain;
+        }
+
+        $first = $this->domains()->where('is_active', true)->first();
+        return $first?->domain;
+    }
+
+    /**
+     * Resolve active event by slug, domain alias, custom_domain, or default
+     */
+    public static function getActiveEvent(?string $slug = null, ?string $domain = null): ?self
+    {
+        // 1. By Slug URL (e.g. /event/{slug})
+        if ($slug) {
+            $event = self::where('slug', $slug)->where('is_active', true)->first();
+            if ($event) {
+                return $event;
             }
         }
 
+        // 2. By Host / Domain Name
+        if ($domain) {
+            $cleanDomain = EventDomain::normalizeDomain($domain);
+
+            // A. Check in event_domains table
+            $domainRecord = EventDomain::where('domain', $cleanDomain)
+                ->where('is_active', true)
+                ->with('event')
+                ->first();
+
+            if ($domainRecord && $domainRecord->event && $domainRecord->event->is_active) {
+                return $domainRecord->event;
+            }
+
+            // B. Also check without/with leading 'www.'
+            $altDomain = str_starts_with($cleanDomain, 'www.')
+                ? substr($cleanDomain, 4)
+                : 'www.' . $cleanDomain;
+
+            $domainRecordAlt = EventDomain::where('domain', $altDomain)
+                ->where('is_active', true)
+                ->with('event')
+                ->first();
+
+            if ($domainRecordAlt && $domainRecordAlt->event && $domainRecordAlt->event->is_active) {
+                return $domainRecordAlt->event;
+            }
+
+            // C. Fallback: Check custom_domain column in events table
+            $byCustomDomain = self::where('custom_domain', $cleanDomain)
+                ->orWhere('custom_domain', $altDomain)
+                ->where('is_active', true)
+                ->first();
+
+            if ($byCustomDomain) {
+                return $byCustomDomain;
+            }
+        }
+
+        // 3. Fallback: Default event or first active event
         return self::where('is_default', true)->where('is_active', true)->first()
             ?? self::where('is_active', true)->first();
+    }
+
+    /**
+     * Resolve Tripay credentials with event-level override or global fallback
+     */
+    public function getTripayCredentials(): array
+    {
+        $mode = SystemSetting::get('tripay_mode', SystemSetting::get('tripay_sandbox', true) ? 'sandbox' : 'production');
+        $isSandbox = ($mode === 'sandbox');
+
+        // Check if event has custom credentials
+        if (!empty($this->tripay_merchant_code) && !empty($this->tripay_api_key)) {
+            return [
+                'merchant_code' => $this->tripay_merchant_code,
+                'api_key' => $this->tripay_api_key,
+                'private_key' => $this->tripay_private_key,
+                'is_custom' => true,
+                'is_sandbox' => $isSandbox,
+            ];
+        }
+
+        // Global system settings
+        if ($isSandbox) {
+            $merchant = (string) (SystemSetting::get('tripay_sandbox_merchant_code') ?: SystemSetting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430')));
+            $apiKey = (string) (SystemSetting::get('tripay_sandbox_api_key') ?: SystemSetting::get('tripay_api_key', env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi')));
+            $privKey = (string) (SystemSetting::get('tripay_sandbox_private_key') ?: SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280')));
+        } else {
+            $merchant = (string) (SystemSetting::get('tripay_prod_merchant_code') ?: SystemSetting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', '')));
+            $apiKey = (string) (SystemSetting::get('tripay_prod_api_key') ?: SystemSetting::get('tripay_api_key', env('TRIPAY_API_KEY', '')));
+            $privKey = (string) (SystemSetting::get('tripay_prod_private_key') ?: SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', '')));
+        }
+
+        return [
+            'merchant_code' => $merchant,
+            'api_key' => $apiKey,
+            'private_key' => $privKey,
+            'is_custom' => false,
+            'is_sandbox' => $isSandbox,
+        ];
+    }
+
+    /**
+     * Resolve Mailketing credentials with event-level override or global fallback
+     */
+    public function getMailketingCredentials(): array
+    {
+        if (!empty($this->mailketing_api_token)) {
+            return [
+                'api_token' => $this->mailketing_api_token,
+                'sender_email' => $this->mailketing_sender_email ?: SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')),
+                'sender_name' => $this->mailketing_sender_name ?: ($this->title . ' Organizing Team'),
+                'is_custom' => true,
+            ];
+        }
+
+        return [
+            'api_token' => (string) SystemSetting::get('mailketing_api_token', env('MAILKETING_API_TOKEN', '')),
+            'sender_email' => (string) SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')),
+            'sender_name' => (string) SystemSetting::get('mailketing_sender_name', env('MAILKETING_SENDER_NAME', 'Panitia Event Lari')),
+            'is_custom' => false,
+        ];
     }
 }

@@ -1,0 +1,9 @@
+# ==============================================================================
+# CloudPanel Cron Job Configuration for RegRun
+# ==============================================================================
+# In CloudPanel, go to: Site -> Cron Jobs -> Add Cron Job
+# Set Schedule: Every Minute (* * * * *)
+# Set Command:
+# ==============================================================================
+
+* * * * * cd /home/{{user}}/htdocs/{{domain}} && php artisan schedule:run >> /dev/null 2>&1

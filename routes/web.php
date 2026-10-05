@@ -18,15 +18,22 @@ Route::get('/', [RegistrationController::class, 'index'])->name('register.index'
 Route::get('/event/{slug}', [RegistrationController::class, 'index'])->name('register.event');
 Route::post('/register/participants', [RegistrationController::class, 'stepParticipants'])->name('register.step_participants');
 Route::post('/register/checkout', [RegistrationController::class, 'stepCheckout'])->name('register.step_checkout');
-Route::post('/register/pay', [RegistrationController::class, 'processPayment'])->name('register.process_payment');
+Route::post('/register/pay', [RegistrationController::class, 'processPayment'])
+    ->middleware('throttle:20,1')
+    ->name('register.process_payment');
 
 // Order & Payment Status
 Route::get('/order/{invoice}', [OrderController::class, 'show'])->name('order.show');
-Route::post('/order/{invoice}/simulate-pay', [OrderController::class, 'simulatePay'])->name('order.simulate_pay');
+Route::post('/order/{invoice}/simulate-pay', [OrderController::class, 'simulatePay'])
+    ->middleware('throttle:15,1')
+    ->name('order.simulate_pay');
 
 // Tripay Webhook Callback
-Route::post('/api/tripay/callback', [TripayCallbackController::class, 'handle'])->name('tripay.callback');
-Route::post('/tripay/callback', [TripayCallbackController::class, 'handle']);
+Route::post('/api/tripay/callback', [TripayCallbackController::class, 'handle'])
+    ->middleware('throttle:60,1')
+    ->name('tripay.callback');
+Route::post('/tripay/callback', [TripayCallbackController::class, 'handle'])
+    ->middleware('throttle:60,1');
 
 // Admin Authentication
 Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('login');
@@ -63,6 +70,11 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     Route::post('/events/{id}/categories', [AdminController::class, 'storeCategory'])->name('events.categories.store');
     Route::post('/category/{id}/update', [AdminController::class, 'updateCategory'])->name('category.update');
     Route::post('/category/{id}/delete', [AdminController::class, 'deleteCategory'])->name('category.delete');
+
+    // Multi-Domain Event Management (CloudPanel Support)
+    Route::post('/events/{id}/domains', [AdminController::class, 'storeDomain'])->name('events.domains.store');
+    Route::post('/domain/{id}/delete', [AdminController::class, 'deleteDomain'])->name('events.domains.delete');
+    Route::post('/domain/{id}/set-primary', [AdminController::class, 'setPrimaryDomain'])->name('events.domains.set_primary');
 
     // Pengaturan Tripay & Mailketing
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');

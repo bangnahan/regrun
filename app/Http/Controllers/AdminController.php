@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\EventDomain;
 use App\Models\JerseySize;
 use App\Models\Participant;
 use App\Models\SystemSetting;
@@ -438,9 +439,12 @@ class AdminController extends Controller
     /**
      * Manage Events & Quota / Early Bird
      */
+    /**
+     * Manage Events & Quota / Early Bird
+     */
     public function events()
     {
-        $events = Event::with('ticketCategories')
+        $events = Event::with(['ticketCategories', 'domains'])
             ->withCount(['transactions', 'participants'])
             ->orderByDesc('is_default')
             ->latest('race_date')
@@ -468,12 +472,20 @@ class AdminController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
             'is_default' => 'nullable|boolean',
+            'logo_url' => 'nullable|string|max:255',
+            'primary_color' => 'nullable|string|max:20',
+            'tripay_merchant_code' => 'nullable|string|max:50',
+            'tripay_api_key' => 'nullable|string',
+            'tripay_private_key' => 'nullable|string',
+            'mailketing_api_token' => 'nullable|string',
         ]);
 
         $isDefault = $request->boolean('is_default');
         if ($isDefault) {
             Event::query()->update(['is_default' => false]);
         }
+
+        $cleanDomain = $request->custom_domain ? EventDomain::normalizeDomain($request->custom_domain) : null;
 
         $event = Event::create([
             'title' => $request->title,
@@ -485,12 +497,28 @@ class AdminController extends Controller
             'rpc_start_date' => $request->rpc_start_date,
             'rpc_end_date' => $request->rpc_end_date,
             'rpc_location' => $request->rpc_location,
-            'custom_domain' => $request->custom_domain ? trim(str_replace(['http://', 'https://'], '', $request->custom_domain), '/') : null,
+            'custom_domain' => $cleanDomain,
             'description' => $request->description,
+            'logo_url' => $request->logo_url,
+            'primary_color' => $request->primary_color ?: '#ea580c',
+            'tripay_merchant_code' => $request->tripay_merchant_code,
+            'tripay_api_key' => $request->tripay_api_key,
+            'tripay_private_key' => $request->tripay_private_key,
+            'mailketing_api_token' => $request->mailketing_api_token,
+            'mailketing_sender_email' => $request->mailketing_sender_email,
+            'mailketing_sender_name' => $request->mailketing_sender_name,
             'auto_generate_bib' => $request->boolean('auto_generate_bib', true),
             'is_active' => $request->boolean('is_active', true),
             'is_default' => $isDefault,
         ]);
+
+        // Auto-register primary domain in event_domains table
+        if ($cleanDomain) {
+            EventDomain::updateOrCreate(
+                ['domain' => $cleanDomain],
+                ['event_id' => $event->id, 'is_primary' => true, 'is_active' => true]
+            );
+        }
 
         // Auto-seed starter categories if requested
         if ($request->boolean('seed_default_categories')) {
@@ -547,12 +575,20 @@ class AdminController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
             'is_default' => 'nullable|boolean',
+            'logo_url' => 'nullable|string|max:255',
+            'primary_color' => 'nullable|string|max:20',
+            'tripay_merchant_code' => 'nullable|string|max:50',
+            'tripay_api_key' => 'nullable|string',
+            'tripay_private_key' => 'nullable|string',
+            'mailketing_api_token' => 'nullable|string',
         ]);
 
         $isDefault = $request->boolean('is_default');
         if ($isDefault) {
             Event::where('id', '!=', $id)->update(['is_default' => false]);
         }
+
+        $cleanDomain = $request->custom_domain ? EventDomain::normalizeDomain($request->custom_domain) : null;
 
         $event->update([
             'title' => $request->title,
@@ -564,14 +600,97 @@ class AdminController extends Controller
             'rpc_start_date' => $request->rpc_start_date,
             'rpc_end_date' => $request->rpc_end_date,
             'rpc_location' => $request->rpc_location,
-            'custom_domain' => $request->custom_domain ? trim(str_replace(['http://', 'https://'], '', $request->custom_domain), '/') : null,
+            'custom_domain' => $cleanDomain,
             'description' => $request->description,
+            'logo_url' => $request->logo_url,
+            'primary_color' => $request->primary_color ?: '#ea580c',
+            'tripay_merchant_code' => $request->tripay_merchant_code,
+            'tripay_api_key' => $request->tripay_api_key,
+            'tripay_private_key' => $request->tripay_private_key,
+            'mailketing_api_token' => $request->mailketing_api_token,
+            'mailketing_sender_email' => $request->mailketing_sender_email,
+            'mailketing_sender_name' => $request->mailketing_sender_name,
             'auto_generate_bib' => $request->boolean('auto_generate_bib'),
             'is_active' => $request->boolean('is_active'),
             'is_default' => $isDefault,
         ]);
 
+        // Sync to event_domains
+        if ($cleanDomain) {
+            EventDomain::updateOrCreate(
+                ['domain' => $cleanDomain],
+                ['event_id' => $event->id, 'is_primary' => true, 'is_active' => true]
+            );
+        }
+
         return back()->with('success', "Pengaturan event '{$event->title}' berhasil diperbarui.");
+    }
+
+    /**
+     * Store new Domain Alias for an Event (CloudPanel Multi-Domain)
+     */
+    public function storeDomain(Request $request, int $eventId)
+    {
+        $event = Event::findOrFail($eventId);
+
+        $request->validate([
+            'domain' => 'required|string|max:150',
+            'is_primary' => 'nullable|boolean',
+        ]);
+
+        $cleanDomain = EventDomain::normalizeDomain($request->domain);
+
+        if (empty($cleanDomain)) {
+            return back()->with('error', 'Nama domain tidak valid.');
+        }
+
+        $existing = EventDomain::where('domain', $cleanDomain)->where('event_id', '!=', $eventId)->first();
+        if ($existing) {
+            return back()->with('error', "Domain '{$cleanDomain}' sudah terhubung ke event lain.");
+        }
+
+        $isPrimary = $request->boolean('is_primary');
+        if ($isPrimary) {
+            EventDomain::where('event_id', $eventId)->update(['is_primary' => false]);
+            $event->update(['custom_domain' => $cleanDomain]);
+        }
+
+        EventDomain::updateOrCreate(
+            ['domain' => $cleanDomain],
+            [
+                'event_id' => $eventId,
+                'is_primary' => $isPrimary,
+                'is_active' => true,
+            ]
+        );
+
+        return back()->with('success', "Domain '{$cleanDomain}' berhasil ditambahkan ke event '{$event->title}'.");
+    }
+
+    /**
+     * Delete Domain Alias
+     */
+    public function deleteDomain(int $domainId)
+    {
+        $domain = EventDomain::findOrFail($domainId);
+        $name = $domain->domain;
+        $domain->delete();
+
+        return back()->with('success', "Domain alias '{$name}' berhasil dihapus.");
+    }
+
+    /**
+     * Set Domain Alias as Primary
+     */
+    public function setPrimaryDomain(int $domainId)
+    {
+        $domain = EventDomain::findOrFail($domainId);
+        EventDomain::where('event_id', $domain->event_id)->update(['is_primary' => false]);
+        $domain->update(['is_primary' => true]);
+
+        $domain->event->update(['custom_domain' => $domain->domain]);
+
+        return back()->with('success', "'{$domain->domain}' sekarang menjadi domain utama event.");
     }
 
     /**
@@ -692,11 +811,30 @@ class AdminController extends Controller
      */
     public function settings()
     {
+        $mode = SystemSetting::get('tripay_mode');
+        if ($mode === null) {
+            $mode = SystemSetting::get('tripay_sandbox', true) ? 'sandbox' : 'production';
+        }
+
         $settings = [
+            'tripay_mode' => $mode,
+            'tripay_sandbox' => $mode === 'sandbox',
+
+            // Sandbox Credentials
+            'tripay_sandbox_merchant_code' => SystemSetting::get('tripay_sandbox_merchant_code', SystemSetting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430'))),
+            'tripay_sandbox_api_key' => SystemSetting::get('tripay_sandbox_api_key', SystemSetting::get('tripay_api_key', env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi'))),
+            'tripay_sandbox_private_key' => SystemSetting::get('tripay_sandbox_private_key', SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280'))),
+
+            // Production Credentials
+            'tripay_prod_merchant_code' => SystemSetting::get('tripay_prod_merchant_code', ''),
+            'tripay_prod_api_key' => SystemSetting::get('tripay_prod_api_key', ''),
+            'tripay_prod_private_key' => SystemSetting::get('tripay_prod_private_key', ''),
+
+            // Legacy Fallbacks
             'tripay_merchant_code' => SystemSetting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430')),
             'tripay_api_key' => SystemSetting::get('tripay_api_key', env('TRIPAY_API_KEY', '')),
             'tripay_private_key' => SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', '')),
-            'tripay_sandbox' => SystemSetting::get('tripay_sandbox', env('TRIPAY_SANDBOX', true)),
+
             'mailketing_api_token' => SystemSetting::get('mailketing_api_token', env('MAILKETING_API_TOKEN', '')),
             'mailketing_sender_email' => SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')),
             'mailketing_sender_name' => SystemSetting::get('mailketing_sender_name', env('MAILKETING_SENDER_NAME', 'Panitia Event Lari')),
@@ -736,18 +874,37 @@ class AdminController extends Controller
     public function saveSettings(Request $request)
     {
         $keys = [
+            'tripay_mode',
+            'tripay_sandbox',
+            'tripay_sandbox_merchant_code',
+            'tripay_sandbox_api_key',
+            'tripay_sandbox_private_key',
+            'tripay_prod_merchant_code',
+            'tripay_prod_api_key',
+            'tripay_prod_private_key',
             'tripay_merchant_code',
             'tripay_api_key',
             'tripay_private_key',
-            'tripay_sandbox',
             'mailketing_api_token',
             'mailketing_sender_email',
             'mailketing_sender_name',
             'auto_generate_bib',
         ];
 
+        // 1. Handle mode synchronization
+        if ($request->has('tripay_mode')) {
+            $mode = $request->input('tripay_mode') === 'production' ? 'production' : 'sandbox';
+            SystemSetting::set('tripay_mode', $mode, 'tripay');
+            SystemSetting::set('tripay_sandbox', $mode === 'sandbox' ? '1' : '0', 'tripay');
+        } elseif ($request->has('tripay_sandbox')) {
+            $isSandbox = (bool) $request->input('tripay_sandbox');
+            SystemSetting::set('tripay_sandbox', $isSandbox ? '1' : '0', 'tripay');
+            SystemSetting::set('tripay_mode', $isSandbox ? 'sandbox' : 'production', 'tripay');
+        }
+
+        // 2. Save remaining settings
         foreach ($keys as $k) {
-            if ($request->has($k)) {
+            if ($request->has($k) && !in_array($k, ['tripay_mode', 'tripay_sandbox'])) {
                 $group = str_starts_with($k, 'tripay') ? 'tripay' : (str_starts_with($k, 'mailketing') ? 'mailketing' : 'general');
                 SystemSetting::set($k, $request->input($k), $group);
             }

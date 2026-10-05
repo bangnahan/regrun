@@ -21,13 +21,27 @@ class OrderController extends Controller
     /**
      * Display order status and instructions / E-Ticket
      */
-    public function show(string $invoice)
+    public function show(Request $request, string $invoice)
     {
         $transaction = Transaction::with(['event', 'items.ticketCategory', 'participants.jerseySize', 'participants.ticketCategory'])
             ->where('invoice_number', $invoice)
             ->firstOrFail();
 
-        return view('order.show', compact('transaction'));
+        // Multi-domain tenant isolation: Dedicated domain cannot access another event's transaction
+        $currentEvent = $request->attributes->get('currentEvent') ?? (app()->bound('currentEvent') ? app('currentEvent') : null);
+        if ($currentEvent && (int) $transaction->event_id !== (int) $currentEvent->id) {
+            $cleanHost = \App\Models\EventDomain::normalizeDomain($request->getHost());
+            $isDedicatedDomain = \App\Models\EventDomain::where('domain', $cleanHost)->exists()
+                || \App\Models\Event::where('custom_domain', $cleanHost)->exists();
+
+            if ($isDedicatedDomain) {
+                abort(404, 'Pesanan tidak ditemukan pada portal event ini.');
+            }
+        }
+
+        $isSandbox = $this->tripayService->isSandbox() && !app()->environment('production');
+
+        return view('order.show', compact('transaction', 'isSandbox'));
     }
 
     /**
@@ -35,7 +49,24 @@ class OrderController extends Controller
      */
     public function simulatePay(Request $request, string $invoice)
     {
+        // CRITICAL SECURITY ENFORCEMENT: Never permit simulated payment in production mode or production environment!
+        if (!$this->tripayService->isSandbox() || app()->environment('production')) {
+            abort(403, 'Aksi simulasi pembayaran dinonaktifkan di mode Produksi demi keamanan transaksi.');
+        }
+
         $transaction = Transaction::where('invoice_number', $invoice)->firstOrFail();
+
+        // Multi-domain tenant isolation: Dedicated domain cannot simulate/pay another event's transaction
+        $currentEvent = $request->attributes->get('currentEvent') ?? (app()->bound('currentEvent') ? app('currentEvent') : null);
+        if ($currentEvent && (int) $transaction->event_id !== (int) $currentEvent->id) {
+            $cleanHost = \App\Models\EventDomain::normalizeDomain($request->getHost());
+            $isDedicatedDomain = \App\Models\EventDomain::where('domain', $cleanHost)->exists()
+                || \App\Models\Event::where('custom_domain', $cleanHost)->exists();
+
+            if ($isDedicatedDomain) {
+                abort(404, 'Pesanan tidak ditemukan pada portal event ini.');
+            }
+        }
 
         if ($transaction->status === 'PAID') {
             return back()->with('info', 'Transaksi ini sudah lunas.');

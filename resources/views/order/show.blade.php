@@ -97,7 +97,8 @@
                 </div>
             @endif
 
-            <!-- Sandbox Testing Simulator Button -->
+            <!-- Sandbox Testing Simulator Button (Shown ONLY in Sandbox / Testing Mode) -->
+            @if(!empty($isSandbox))
             <div class="mt-6 pt-5 border-t border-slate-100 bg-amber-50/70 p-4 rounded-xl border border-amber-200">
                 <div class="flex items-center justify-between flex-wrap gap-3">
                     <div>
@@ -114,6 +115,7 @@
                     </form>
                 </div>
             </div>
+            @endif
         </div>
     @endif
 

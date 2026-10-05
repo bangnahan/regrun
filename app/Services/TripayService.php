@@ -15,17 +15,67 @@ class TripayService
     protected string $merchantCode;
     protected bool $isSandbox;
     protected string $baseUrl;
+    protected string $mode;
 
     public function __construct()
     {
-        $this->merchantCode = SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430')));
-        $this->apiKey = SystemSetting::get('tripay_api_key', config('services.tripay.api_key', env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi')));
-        $this->privateKey = SystemSetting::get('tripay_private_key', config('services.tripay.private_key', env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280')));
-        $this->isSandbox = (bool) SystemSetting::get('tripay_sandbox', config('services.tripay.sandbox', env('TRIPAY_SANDBOX', true)));
+        // 1. Determine active mode: check 'tripay_mode' first, then 'tripay_sandbox'
+        $modeSetting = SystemSetting::get('tripay_mode');
+        if ($modeSetting !== null) {
+            $this->isSandbox = ($modeSetting === 'sandbox');
+        } else {
+            $this->isSandbox = (bool) SystemSetting::get('tripay_sandbox', config('services.tripay.sandbox', env('TRIPAY_SANDBOX', true)));
+        }
+        $this->mode = $this->isSandbox ? 'sandbox' : 'production';
 
-        $this->baseUrl = $this->isSandbox
-            ? 'https://tripay.co.id/api-sandbox/'
-            : 'https://tripay.co.id/api/';
+        // 2. Load credentials based on active mode with graceful fallback to legacy keys and env
+        if ($this->isSandbox) {
+            $this->merchantCode = (string) (SystemSetting::get('tripay_sandbox_merchant_code')
+                ?: SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430'))));
+            $this->apiKey = (string) (SystemSetting::get('tripay_sandbox_api_key')
+                ?: SystemSetting::get('tripay_api_key', config('services.tripay.api_key', env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi'))));
+            $this->privateKey = (string) (SystemSetting::get('tripay_sandbox_private_key')
+                ?: SystemSetting::get('tripay_private_key', config('services.tripay.private_key', env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280'))));
+            $this->baseUrl = 'https://tripay.co.id/api-sandbox/';
+        } else {
+            $this->merchantCode = (string) (SystemSetting::get('tripay_prod_merchant_code')
+                ?: SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', env('TRIPAY_MERCHANT_CODE', ''))));
+            $this->apiKey = (string) (SystemSetting::get('tripay_prod_api_key')
+                ?: SystemSetting::get('tripay_api_key', config('services.tripay.api_key', env('TRIPAY_API_KEY', ''))));
+            $this->privateKey = (string) (SystemSetting::get('tripay_prod_private_key')
+                ?: SystemSetting::get('tripay_private_key', config('services.tripay.private_key', env('TRIPAY_PRIVATE_KEY', ''))));
+            $this->baseUrl = 'https://tripay.co.id/api/';
+        }
+    }
+
+    public function isSandbox(): bool
+    {
+        return $this->isSandbox;
+    }
+
+    public function getMode(): string
+    {
+        return $this->mode;
+    }
+
+    public function getBaseUrl(): string
+    {
+        return $this->baseUrl;
+    }
+
+    public function getMerchantCode(): string
+    {
+        return $this->merchantCode;
+    }
+
+    public function getApiKey(): string
+    {
+        return $this->apiKey;
+    }
+
+    public function getPrivateKey(): string
+    {
+        return $this->privateKey;
     }
 
     /**
@@ -33,7 +83,7 @@ class TripayService
      */
     public function getPaymentChannels(): array
     {
-        return cache()->remember('tripay_payment_channels_' . md5($this->apiKey), 300, function () {
+        return cache()->remember('tripay_payment_channels_' . md5($this->apiKey . $this->baseUrl), 300, function () {
             try {
                 $response = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $this->apiKey,
@@ -64,6 +114,16 @@ class TripayService
      */
     public function testConnection(): array
     {
+        if (empty($this->apiKey) || empty($this->merchantCode)) {
+            return [
+                'connected' => false,
+                'status' => 'UNCONFIGURED',
+                'merchant_code' => $this->merchantCode ?: '(Belum diatur)',
+                'mode' => $this->isSandbox ? 'Sandbox' : 'Production',
+                'error' => 'Kredensial Tripay ' . ($this->isSandbox ? 'Sandbox' : 'Produksi') . ' belum dikonfigurasi.',
+            ];
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
@@ -85,12 +145,16 @@ class TripayService
             return [
                 'connected' => false,
                 'status' => 'HTTP ' . $response->status(),
+                'merchant_code' => $this->merchantCode,
+                'mode' => $this->isSandbox ? 'Sandbox' : 'Production',
                 'error' => $response->json('message') ?? $response->body(),
             ];
         } catch (\Throwable $e) {
             return [
                 'connected' => false,
                 'status' => 'EXCEPTION',
+                'merchant_code' => $this->merchantCode,
+                'mode' => $this->isSandbox ? 'Sandbox' : 'Production',
                 'error' => $e->getMessage(),
             ];
         }
@@ -101,15 +165,33 @@ class TripayService
      */
     public function createTransaction(Transaction $transaction, string $channelCode): array
     {
-        // Sandbox failsafe: If merchant has QRIS2 activated, map QRIS -> QRIS2
+        // Environment QRIS Channel Mapping:
+        // Sandbox Tripay uses QRIS2 channel for simulator QR
+        // Production Tripay uses QRIS channel for National QRIS
         if (strtoupper($channelCode) === 'QRIS' && $this->isSandbox) {
             $channelCode = 'QRIS2';
+        } elseif (strtoupper($channelCode) === 'QRIS2' && !$this->isSandbox) {
+            $channelCode = 'QRIS';
+        }
+
+        $merchantCode = $this->merchantCode;
+        $apiKey = $this->apiKey;
+        $privateKey = $this->privateKey;
+
+        // Multi-domain / Event-level credentials override if configured on the event
+        if ($transaction->event) {
+            $eventCreds = $transaction->event->getTripayCredentials();
+            if (!empty($eventCreds['is_custom'])) {
+                $merchantCode = $eventCreds['merchant_code'];
+                $apiKey = $eventCreds['api_key'];
+                $privateKey = $eventCreds['private_key'];
+            }
         }
 
         $merchantRef = $transaction->invoice_number;
         // Amount sent to Tripay is the pure order subtotal; Tripay calculates & appends customer fee
         $amount = (int) round($transaction->subtotal);
-        $signature = hash_hmac('sha256', $this->merchantCode . $merchantRef . $amount, $this->privateKey);
+        $signature = hash_hmac('sha256', $merchantCode . $merchantRef . $amount, $privateKey);
 
         $orderItems = [];
         foreach ($transaction->items as $item) {
@@ -121,14 +203,21 @@ class TripayService
             ];
         }
 
-        // Determine callback & return URLs
+        // Multi-domain dynamic return and callback URLs
+        $domain = $transaction->event?->getPrimaryDomain() ?? request()->getHost();
+        $scheme = request()->isSecure() ? 'https://' : 'http://';
+        $eventBaseUrl = $scheme . $domain;
+
         $callbackUrl = env('TRIPAY_CALLBACK_URL');
         if (empty($callbackUrl)) {
-            $appUrl = config('app.url', 'http://127.0.0.1:8080');
-            if (!str_contains($appUrl, 'localhost') && !str_contains($appUrl, '127.0.0.1')) {
-                $callbackUrl = rtrim($appUrl, '/') . '/api/tripay/callback';
+            if (!str_contains($domain, 'localhost') && !str_contains($domain, '127.0.0.1')) {
+                $callbackUrl = rtrim($eventBaseUrl, '/') . '/api/tripay/callback';
             }
         }
+
+        $returnUrl = (!str_contains($domain, 'localhost') && !str_contains($domain, '127.0.0.1'))
+            ? rtrim($eventBaseUrl, '/') . '/order/' . $transaction->invoice_number
+            : route('order.show', ['invoice' => $transaction->invoice_number]);
 
         $payload = [
             'method' => $channelCode,
@@ -138,7 +227,7 @@ class TripayService
             'customer_email' => $transaction->buyer_email,
             'customer_phone' => $transaction->buyer_phone,
             'order_items' => $orderItems,
-            'return_url' => route('order.show', ['invoice' => $transaction->invoice_number]),
+            'return_url' => $returnUrl,
             'expired_time' => now()->addMinutes(120)->timestamp,
             'signature' => $signature,
         ];
@@ -214,16 +303,45 @@ class TripayService
     }
 
     /**
-     * Validate Webhook Signature from Tripay
+     * Validate Webhook Signature from Tripay with multi-environment fallback
      */
     public function validateCallback(string $jsonPayload, ?string $incomingSignature): bool
     {
-        if (empty($incomingSignature)) {
+        if (empty($incomingSignature) || empty($this->privateKey)) {
             return false;
         }
 
+        // 1. Check against active profile's private key
         $calculated = hash_hmac('sha256', $jsonPayload, $this->privateKey);
-        return hash_equals($calculated, $incomingSignature);
+        if (hash_equals($calculated, $incomingSignature)) {
+            return true;
+        }
+
+        // 2. Secondary check against alternate profile private key (prevent dropping webhook if mode was switched)
+        $altPrivateKey = $this->isSandbox
+            ? (string) (SystemSetting::get('tripay_prod_private_key') ?: '')
+            : (string) (SystemSetting::get('tripay_sandbox_private_key') ?: SystemSetting::get('tripay_private_key', ''));
+
+        if (!empty($altPrivateKey)) {
+            $altCalculated = hash_hmac('sha256', $jsonPayload, $altPrivateKey);
+            if (hash_equals($altCalculated, $incomingSignature)) {
+                return true;
+            }
+        }
+
+        // 3. Multi-domain: Check against any event with custom private key
+        try {
+            $customEventKeys = \App\Models\Event::whereNotNull('tripay_private_key')->pluck('tripay_private_key')->filter();
+            foreach ($customEventKeys as $eventKey) {
+                if ($eventKey && hash_equals(hash_hmac('sha256', $jsonPayload, $eventKey), $incomingSignature)) {
+                    return true;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore DB error during testing/early migration
+        }
+
+        return false;
     }
 
     /**
@@ -231,11 +349,16 @@ class TripayService
      */
     public function getDefaultChannels(): array
     {
+        $qrisCode = $this->isSandbox ? 'QRIS2' : 'QRIS';
+        $qrisName = $this->isSandbox
+            ? 'QRIS Sandbox (BCA Mobile, GoPay, OVO, ShopeePay, DANA)'
+            : 'QRIS (Semua E-Wallet & Mobile Banking Nasional)';
+
         return [
             // QRIS & E-Wallet
             [
-                'code' => 'QRIS2',
-                'name' => 'QRIS (BCA Mobile, GoPay, OVO, ShopeePay, DANA, LinkAja)',
+                'code' => $qrisCode,
+                'name' => $qrisName,
                 'group' => 'E-Wallet',
                 'fee_customer' => ['flat' => 750, 'percent' => 0.7],
                 'icon_url' => 'https://assets.tripay.co.id/upload/payment-icon/8ewGzP6SWe1649667701.png',
