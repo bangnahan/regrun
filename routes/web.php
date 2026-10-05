@@ -54,7 +54,13 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
 
     // Manajemen Event & Kuota/Early Bird
     Route::get('/events', [AdminController::class, 'events'])->name('events');
+    Route::post('/events', [AdminController::class, 'storeEvent'])->name('events.store');
+    Route::post('/events/{id}/update', [AdminController::class, 'updateEvent'])->name('events.update');
+    Route::post('/events/{id}/delete', [AdminController::class, 'deleteEvent'])->name('events.delete');
+    Route::post('/events/{id}/set-default', [AdminController::class, 'setDefaultEvent'])->name('events.set_default');
+    Route::post('/events/{id}/categories', [AdminController::class, 'storeCategory'])->name('events.categories.store');
     Route::post('/category/{id}/update', [AdminController::class, 'updateCategory'])->name('category.update');
+    Route::post('/category/{id}/delete', [AdminController::class, 'deleteCategory'])->name('category.delete');
 
     // Pengaturan Tripay & Mailketing
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');

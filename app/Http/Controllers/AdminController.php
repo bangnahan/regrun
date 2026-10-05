@@ -13,6 +13,7 @@ use App\Services\TripayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminController extends Controller
@@ -386,8 +387,201 @@ class AdminController extends Controller
      */
     public function events()
     {
-        $events = Event::with('ticketCategories')->latest()->get();
+        $events = Event::with('ticketCategories')
+            ->withCount(['transactions', 'participants'])
+            ->orderByDesc('is_default')
+            ->latest('race_date')
+            ->get();
+
         return view('admin.events', compact('events'));
+    }
+
+    /**
+     * Create New Event
+     */
+    public function storeEvent(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:200',
+            'slug' => 'required|string|max:100|alpha_dash|unique:events,slug',
+            'race_date' => 'required|date',
+            'race_start_time' => 'required|string',
+            'venue_name' => 'required|string|max:200',
+            'venue_address' => 'nullable|string',
+            'rpc_start_date' => 'nullable|date',
+            'rpc_end_date' => 'nullable|date',
+            'rpc_location' => 'nullable|string',
+            'custom_domain' => 'nullable|string|max:150|unique:events,custom_domain',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+            'is_default' => 'nullable|boolean',
+        ]);
+
+        $isDefault = $request->boolean('is_default');
+        if ($isDefault) {
+            Event::query()->update(['is_default' => false]);
+        }
+
+        $event = Event::create([
+            'title' => $request->title,
+            'slug' => Str::slug($request->slug),
+            'race_date' => $request->race_date,
+            'race_start_time' => $request->race_start_time,
+            'venue_name' => $request->venue_name,
+            'venue_address' => $request->venue_address,
+            'rpc_start_date' => $request->rpc_start_date,
+            'rpc_end_date' => $request->rpc_end_date,
+            'rpc_location' => $request->rpc_location,
+            'custom_domain' => $request->custom_domain ? trim(str_replace(['http://', 'https://'], '', $request->custom_domain), '/') : null,
+            'description' => $request->description,
+            'is_active' => $request->boolean('is_active', true),
+            'is_default' => $isDefault,
+        ]);
+
+        // Auto-seed starter categories if requested
+        if ($request->boolean('seed_default_categories')) {
+            $categories = [
+                [
+                    'name' => '5K Fun Run',
+                    'code' => '5K',
+                    'description' => 'Kategori 5K Fun Run untuk pelari pemula & keluarga.',
+                    'price' => 175000,
+                    'early_bird_price' => 145000,
+                    'early_bird_end_date' => now()->addDays(20),
+                    'quota' => 500,
+                    'min_age' => 10,
+                    'sort_order' => 1,
+                ],
+                [
+                    'name' => '10K Open Category',
+                    'code' => '10K',
+                    'description' => 'Kategori 10K untuk pelari umum & kompetitif.',
+                    'price' => 275000,
+                    'early_bird_price' => 225000,
+                    'early_bird_end_date' => now()->addDays(20),
+                    'quota' => 350,
+                    'min_age' => 14,
+                    'sort_order' => 2,
+                ],
+            ];
+            foreach ($categories as $cat) {
+                $event->ticketCategories()->create($cat);
+            }
+        }
+
+        return back()->with('success', "Event '{$event->title}' berhasil dibuat.");
+    }
+
+    /**
+     * Update Event Details
+     */
+    public function updateEvent(Request $request, int $id)
+    {
+        $event = Event::findOrFail($id);
+
+        $request->validate([
+            'title' => 'required|string|max:200',
+            'slug' => "required|string|max:100|alpha_dash|unique:events,slug,{$id}",
+            'race_date' => 'required|date',
+            'race_start_time' => 'required|string',
+            'venue_name' => 'required|string|max:200',
+            'venue_address' => 'nullable|string',
+            'rpc_start_date' => 'nullable|date',
+            'rpc_end_date' => 'nullable|date',
+            'rpc_location' => 'nullable|string',
+            'custom_domain' => "nullable|string|max:150|unique:events,custom_domain,{$id}",
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+            'is_default' => 'nullable|boolean',
+        ]);
+
+        $isDefault = $request->boolean('is_default');
+        if ($isDefault) {
+            Event::where('id', '!=', $id)->update(['is_default' => false]);
+        }
+
+        $event->update([
+            'title' => $request->title,
+            'slug' => Str::slug($request->slug),
+            'race_date' => $request->race_date,
+            'race_start_time' => $request->race_start_time,
+            'venue_name' => $request->venue_name,
+            'venue_address' => $request->venue_address,
+            'rpc_start_date' => $request->rpc_start_date,
+            'rpc_end_date' => $request->rpc_end_date,
+            'rpc_location' => $request->rpc_location,
+            'custom_domain' => $request->custom_domain ? trim(str_replace(['http://', 'https://'], '', $request->custom_domain), '/') : null,
+            'description' => $request->description,
+            'is_active' => $request->boolean('is_active'),
+            'is_default' => $isDefault,
+        ]);
+
+        return back()->with('success', "Pengaturan event '{$event->title}' berhasil diperbarui.");
+    }
+
+    /**
+     * Set Event as Default
+     */
+    public function setDefaultEvent(int $id)
+    {
+        Event::query()->update(['is_default' => false]);
+        $event = Event::findOrFail($id);
+        $event->update(['is_default' => true]);
+
+        return back()->with('success', "'{$event->title}' berhasil ditetapkan sebagai Event Utama (Default).");
+    }
+
+    /**
+     * Delete Event
+     */
+    public function deleteEvent(int $id)
+    {
+        $event = Event::withCount('transactions')->findOrFail($id);
+
+        if ($event->transactions_count > 0) {
+            return back()->with('error', "Event '{$event->title}' tidak dapat dihapus karena sudah memiliki {$event->transactions_count} transaksi. Anda dapat mengubah status event menjadi Nonaktif.");
+        }
+
+        $eventTitle = $event->title;
+        $event->delete();
+
+        return back()->with('success', "Event '{$eventTitle}' berhasil dihapus.");
+    }
+
+    /**
+     * Add Ticket Category to Event
+     */
+    public function storeCategory(Request $request, int $eventId)
+    {
+        $event = Event::findOrFail($eventId);
+
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'code' => 'required|string|max:20',
+            'quota' => 'required|integer|min:1',
+            'price' => 'required|numeric|min:0',
+            'early_bird_price' => 'nullable|numeric|min:0',
+            'early_bird_end_date' => 'nullable|date',
+            'min_age' => 'nullable|integer|min:0',
+            'description' => 'nullable|string',
+            'sort_order' => 'nullable|integer',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $event->ticketCategories()->create([
+            'name' => $request->name,
+            'code' => strtoupper(trim($request->code)),
+            'quota' => $request->quota,
+            'price' => $request->price,
+            'early_bird_price' => $request->early_bird_price,
+            'early_bird_end_date' => $request->early_bird_end_date,
+            'min_age' => $request->input('min_age', 12),
+            'description' => $request->description,
+            'sort_order' => $request->input('sort_order', 0),
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        return back()->with('success', "Kategori tiket '{$request->name}' berhasil ditambahkan ke {$event->title}.");
     }
 
     /**
@@ -396,23 +590,46 @@ class AdminController extends Controller
     public function updateCategory(Request $request, int $id)
     {
         $request->validate([
+            'name' => 'required|string|max:100',
+            'code' => 'required|string|max:20',
             'quota' => 'required|integer|min:0',
             'price' => 'required|numeric|min:0',
             'early_bird_price' => 'nullable|numeric|min:0',
             'early_bird_end_date' => 'nullable|date',
+            'min_age' => 'nullable|integer|min:0',
             'is_active' => 'required|boolean',
         ]);
 
         $category = TicketCategory::findOrFail($id);
         $category->update([
+            'name' => $request->name,
+            'code' => strtoupper(trim($request->code)),
             'quota' => $request->quota,
             'price' => $request->price,
             'early_bird_price' => $request->early_bird_price,
             'early_bird_end_date' => $request->early_bird_end_date,
+            'min_age' => $request->input('min_age', $category->min_age),
             'is_active' => (bool) $request->is_active,
         ]);
 
         return back()->with('success', "Kategori {$category->name} berhasil diperbarui.");
+    }
+
+    /**
+     * Delete Ticket Category
+     */
+    public function deleteCategory(int $id)
+    {
+        $category = TicketCategory::findOrFail($id);
+
+        if ($category->sold_count > 0 || $category->reserved_count > 0) {
+            return back()->with('error', "Kategori '{$category->name}' tidak dapat dihapus karena sudah ada tiket terjual/dipesan. Anda dapat menonaktifkan status penjualan.");
+        }
+
+        $name = $category->name;
+        $category->delete();
+
+        return back()->with('success', "Kategori '{$name}' berhasil dihapus.");
     }
 
     /**
