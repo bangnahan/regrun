@@ -47,6 +47,27 @@ class RegistrationController extends Controller
      */
     public function stepParticipants(Request $request)
     {
+        // Support GET method (page refresh, browser back, or validation redirect)
+        if ($request->isMethod('get')) {
+            $eventId = session('registration_event_id');
+            $selectedTickets = session('registration_tickets');
+
+            if (!$eventId || empty($selectedTickets)) {
+                return redirect()->route('register.index')->with('info', 'Silakan pilih tiket terlebih dahulu untuk melanjutkan pendaftaran.');
+            }
+
+            $event = Event::findOrFail($eventId);
+            $totalQuantity = 0;
+            foreach ($selectedTickets as $item) {
+                $totalQuantity += (int) ($item['quantity'] ?? 0);
+            }
+
+            $sessionParticipants = session('registration_participants', []);
+            $jerseySizes = JerseySize::where('is_available', true)->orderBy('sort_order')->get();
+
+            return view('registration.step2_participants', compact('event', 'selectedTickets', 'totalQuantity', 'jerseySizes', 'sessionParticipants'));
+        }
+
         $request->validate([
             'event_id' => 'required|exists:events,id',
             'tickets' => 'required|array',
@@ -104,9 +125,10 @@ class RegistrationController extends Controller
         // Save selected tickets in session
         session(['registration_tickets' => $selectedTickets, 'registration_event_id' => $event->id]);
 
+        $sessionParticipants = session('registration_participants', []);
         $jerseySizes = JerseySize::where('is_available', true)->orderBy('sort_order')->get();
 
-        return view('registration.step2_participants', compact('event', 'selectedTickets', 'totalQuantity', 'jerseySizes'));
+        return view('registration.step2_participants', compact('event', 'selectedTickets', 'totalQuantity', 'jerseySizes', 'sessionParticipants'));
     }
 
     /**
@@ -114,6 +136,35 @@ class RegistrationController extends Controller
      */
     public function stepCheckout(Request $request)
     {
+        $eventId = session('registration_event_id');
+        $selectedTickets = session('registration_tickets');
+
+        if (!$eventId || empty($selectedTickets)) {
+            return redirect()->route('register.index')->with('error', 'Sesi pendaftaran Anda telah berakhir. Silakan pilih tiket kembali.');
+        }
+
+        $event = Event::findOrFail($eventId);
+
+        // Support GET method (page refresh, back button, or direct return)
+        if ($request->isMethod('get')) {
+            $participantsData = session('registration_participants');
+
+            if (empty($participantsData)) {
+                return redirect()->route('register.step_participants')->with('info', 'Silakan lengkapi formulir data peserta terlebih dahulu.');
+            }
+
+            // Calculate totals
+            $subtotal = 0;
+            foreach ($selectedTickets as $item) {
+                $subtotal += ($item['price'] * $item['quantity']);
+            }
+
+            // Get Tripay payment channels
+            $paymentChannels = $this->tripayService->getPaymentChannels();
+
+            return view('registration.step3_checkout', compact('event', 'selectedTickets', 'participantsData', 'subtotal', 'paymentChannels'));
+        }
+
         $request->validate([
             'participants' => 'required|array|min:1',
             'participants.*.full_name' => 'required|string|max:120',
@@ -130,14 +181,6 @@ class RegistrationController extends Controller
             'participants.*.emergency_contact_relation' => 'required|string|max:50',
         ]);
 
-        $eventId = session('registration_event_id');
-        $selectedTickets = session('registration_tickets');
-
-        if (!$eventId || empty($selectedTickets)) {
-            return redirect()->route('register.index')->with('error', 'Sesi pendaftaran Anda telah berakhir. Silakan pilih tiket kembali.');
-        }
-
-        $event = Event::findOrFail($eventId);
         $participantsData = $request->participants;
 
         // Save participant details into session

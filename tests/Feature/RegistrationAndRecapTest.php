@@ -49,6 +49,62 @@ class RegistrationAndRecapTest extends TestCase
         $response->assertSee('Ukuran Jersey Event');
     }
 
+    public function test_step_participants_get_redirects_to_index_when_no_session(): void
+    {
+        $response = $this->get(route('register.step_participants'));
+        $response->assertRedirect(route('register.index'));
+        $response->assertSessionHas('info');
+    }
+
+    public function test_step_participants_get_renders_view_when_session_present(): void
+    {
+        $event = Event::first();
+        $category = TicketCategory::first();
+
+        // 1. Submit tickets via POST (standard step 1 flow)
+        $this->post(route('register.step_participants'), [
+            'event_id' => $event->id,
+            'tickets' => [$category->id => 1],
+        ])->assertStatus(200);
+
+        // 2. Perform GET (refresh or back button) on /register/participants
+        $response = $this->get(route('register.step_participants'));
+        $response->assertStatus(200);
+        $response->assertSee('Pengisian Data Peserta Lari');
+        $response->assertSee($category->name);
+    }
+
+    public function test_step_checkout_get_handles_session_appropriately(): void
+    {
+        // Case A: No session -> redirects to index
+        $this->get(route('register.step_checkout'))
+            ->assertRedirect(route('register.index'));
+
+        // Case B: Has tickets session but no participants -> redirects to step_participants
+        $event = Event::first();
+        $category = TicketCategory::first();
+        session([
+            'registration_event_id' => $event->id,
+            'registration_tickets' => [
+                ['category_id' => $category->id, 'category_name' => $category->name, 'quantity' => 1, 'price' => 100000],
+            ],
+        ]);
+
+        $this->get(route('register.step_checkout'))
+            ->assertRedirect(route('register.step_participants'));
+
+        // Case C: Has tickets & participants -> renders step 3 view
+        session([
+            'registration_participants' => [
+                ['full_name' => 'Pelari Test', 'email' => 'test@example.com'],
+            ],
+        ]);
+
+        $this->get(route('register.step_checkout'))
+            ->assertStatus(200)
+            ->assertSee('Metode Pembayaran (Tripay)');
+    }
+
     public function test_step_checkout_with_array_session_data_renders_successfully()
     {
         $event = Event::first();

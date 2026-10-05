@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Route;
 // Public Registration Multi-Step Wizard
 Route::get('/', [RegistrationController::class, 'index'])->name('register.index');
 Route::get('/event/{slug}', [RegistrationController::class, 'index'])->name('register.event');
-Route::post('/register/participants', [RegistrationController::class, 'stepParticipants'])->name('register.step_participants');
-Route::post('/register/checkout', [RegistrationController::class, 'stepCheckout'])->name('register.step_checkout');
+Route::match(['get', 'post'], '/register/participants', [RegistrationController::class, 'stepParticipants'])->name('register.step_participants');
+Route::match(['get', 'post'], '/register/checkout', [RegistrationController::class, 'stepCheckout'])->name('register.step_checkout');
 Route::post('/register/pay', [RegistrationController::class, 'processPayment'])
     ->middleware('throttle:20,1')
     ->name('register.process_payment');

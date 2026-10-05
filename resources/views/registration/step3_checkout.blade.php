@@ -267,7 +267,7 @@
                     @foreach($selectedTickets as $item)
                         <div class="py-3 flex items-center justify-between gap-3">
                             <div>
-                                <div class="font-bold text-slate-900">{{ $item['category_name'] ?? (is_array($item['category']) ? $item['category']['name'] : $item['category']->name) }}</div>
+                                <div class="font-bold text-slate-900">{{ $item['category_name'] ?? (isset($item['category']) ? (is_array($item['category']) ? $item['category']['name'] : $item['category']->name) : 'Tiket Event') }}</div>
                                 <div class="text-[11px] text-slate-500">
                                     {{ $item['quantity'] }} x Rp {{ number_format($item['price'], 0, ',', '.') }}
                                 </div>

@@ -83,6 +83,7 @@
                             <label class="block font-bold text-slate-700 mb-1.5">Nama Lengkap (Sesuai KTP/Paspor) <span class="text-rose-500">*</span></label>
                             <input type="text" 
                                    name="participants[{{ $currentIndex }}][full_name]" 
+                                   value="{{ old('participants.'.$currentIndex.'.full_name', $sessionParticipants[$currentIndex]['full_name'] ?? '') }}"
                                    required 
                                    placeholder="Contoh: Budi Santoso"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
@@ -93,6 +94,7 @@
                             <label class="block font-bold text-slate-700 mb-1.5">Nomor Identitas (NIK KTP / Paspor) <span class="text-rose-500">*</span></label>
                             <input type="text" 
                                    name="participants[{{ $currentIndex }}][identity_number]" 
+                                   value="{{ old('participants.'.$currentIndex.'.identity_number', $sessionParticipants[$currentIndex]['identity_number'] ?? '') }}"
                                    required 
                                    placeholder="16 digit NIK atau Nomor Paspor"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
@@ -103,8 +105,8 @@
                             <label class="block font-bold text-slate-700 mb-1.5">Jenis Kelamin <span class="text-rose-500">*</span></label>
                             <select name="participants[{{ $currentIndex }}][gender]" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white">
                                 <option value="">-- Pilih Jenis Kelamin --</option>
-                                <option value="L">Laki-laki</option>
-                                <option value="P">Perempuan</option>
+                                <option value="L" {{ old('participants.'.$currentIndex.'.gender', $sessionParticipants[$currentIndex]['gender'] ?? '') === 'L' ? 'selected' : '' }}>Laki-laki</option>
+                                <option value="P" {{ old('participants.'.$currentIndex.'.gender', $sessionParticipants[$currentIndex]['gender'] ?? '') === 'P' ? 'selected' : '' }}>Perempuan</option>
                             </select>
                         </div>
 
@@ -113,6 +115,7 @@
                             <label class="block font-bold text-slate-700 mb-1.5">Tanggal Lahir <span class="text-rose-500">*</span></label>
                             <input type="date" 
                                    name="participants[{{ $currentIndex }}][date_of_birth]" 
+                                   value="{{ old('participants.'.$currentIndex.'.date_of_birth', $sessionParticipants[$currentIndex]['date_of_birth'] ?? '') }}"
                                    required 
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white" />
                         </div>
@@ -122,6 +125,7 @@
                             <label class="block font-bold text-slate-700 mb-1.5">Nomor WhatsApp <span class="text-rose-500">*</span></label>
                             <input type="tel" 
                                    name="participants[{{ $currentIndex }}][phone_number]" 
+                                   value="{{ old('participants.'.$currentIndex.'.phone_number', $sessionParticipants[$currentIndex]['phone_number'] ?? '') }}"
                                    required 
                                    placeholder="08123456789"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
@@ -132,6 +136,7 @@
                             <label class="block font-bold text-slate-700 mb-1.5">Email Peserta (Untuk E-Ticket) <span class="text-rose-500">*</span></label>
                             <input type="email" 
                                    name="participants[{{ $currentIndex }}][email]" 
+                                   value="{{ old('participants.'.$currentIndex.'.email', $sessionParticipants[$currentIndex]['email'] ?? '') }}"
                                    required 
                                    placeholder="peserta@email.com"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
@@ -146,7 +151,7 @@
                             <select name="participants[{{ $currentIndex }}][jersey_size_id]" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white font-semibold">
                                 <option value="">-- Pilih Ukuran Jersey (XS - 5XL) --</option>
                                 @foreach($jerseySizes as $size)
-                                    <option value="{{ $size->id }}">
+                                    <option value="{{ $size->id }}" {{ old('participants.'.$currentIndex.'.jersey_size_id', $sessionParticipants[$currentIndex]['jersey_size_id'] ?? '') == $size->id ? 'selected' : '' }}>
                                         Size {{ $size->size_code }}
                                     </option>
                                 @endforeach
@@ -161,6 +166,7 @@
                             </div>
                             <input type="text" 
                                    name="participants[{{ $currentIndex }}][bib_name]" 
+                                   value="{{ old('participants.'.$currentIndex.'.bib_name', $sessionParticipants[$currentIndex]['bib_name'] ?? '') }}"
                                    maxlength="12" 
                                    required 
                                    placeholder="Contoh: BUDI RUN"
@@ -171,11 +177,11 @@
                         <div>
                             <label class="block font-bold text-slate-700 mb-1.5">Golongan Darah (Keperluan Medis) <span class="text-rose-500">*</span></label>
                             <select name="participants[{{ $currentIndex }}][blood_type]" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white">
-                                <option value="UNKNOWN">Tidak Tahu</option>
-                                <option value="A">A</option>
-                                <option value="B">B</option>
-                                <option value="AB">AB</option>
-                                <option value="O">O</option>
+                                @foreach(['UNKNOWN' => 'Tidak Tahu', 'A' => 'A', 'B' => 'B', 'AB' => 'AB', 'O' => 'O'] as $btKey => $btLabel)
+                                    <option value="{{ $btKey }}" {{ old('participants.'.$currentIndex.'.blood_type', $sessionParticipants[$currentIndex]['blood_type'] ?? 'UNKNOWN') === $btKey ? 'selected' : '' }}>
+                                        {{ $btLabel }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -184,6 +190,7 @@
                             <label class="block font-bold text-slate-700 mb-1.5">Nama Komunitas / Klub Lari (Opsional)</label>
                             <input type="text" 
                                    name="participants[{{ $currentIndex }}][running_club]" 
+                                   value="{{ old('participants.'.$currentIndex.'.running_club', $sessionParticipants[$currentIndex]['running_club'] ?? '') }}"
                                    placeholder="Contoh: Jakarta Runners"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm" />
                         </div>
@@ -199,6 +206,7 @@
                                 <label class="block text-slate-600 mb-1 font-medium">Nama Kontak <span class="text-rose-500">*</span></label>
                                 <input type="text" 
                                        name="participants[{{ $currentIndex }}][emergency_contact_name]" 
+                                       value="{{ old('participants.'.$currentIndex.'.emergency_contact_name', $sessionParticipants[$currentIndex]['emergency_contact_name'] ?? '') }}"
                                        required 
                                        placeholder="Nama kerabat"
                                        class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white" />
@@ -207,6 +215,7 @@
                                 <label class="block text-slate-600 mb-1 font-medium">No. Telepon Kontak <span class="text-rose-500">*</span></label>
                                 <input type="tel" 
                                        name="participants[{{ $currentIndex }}][emergency_contact_phone]" 
+                                       value="{{ old('participants.'.$currentIndex.'.emergency_contact_phone', $sessionParticipants[$currentIndex]['emergency_contact_phone'] ?? '') }}"
                                        required 
                                        placeholder="08xxxxxxxx"
                                        class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white" />
@@ -214,11 +223,11 @@
                             <div>
                                 <label class="block text-slate-600 mb-1 font-medium">Hubungan <span class="text-rose-500">*</span></label>
                                 <select name="participants[{{ $currentIndex }}][emergency_contact_relation]" required class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
-                                    <option value="Orang Tua">Orang Tua</option>
-                                    <option value="Suami/Istri">Suami / Istri</option>
-                                    <option value="Saudara Kandung">Saudara Kandung</option>
-                                    <option value="Teman / Kerabat">Teman / Kerabat</option>
-                                    <option value="Lainnya">Lainnya</option>
+                                    @foreach(['Orang Tua', 'Suami/Istri', 'Saudara Kandung', 'Teman / Kerabat', 'Lainnya'] as $rel)
+                                        <option value="{{ $rel }}" {{ old('participants.'.$currentIndex.'.emergency_contact_relation', $sessionParticipants[$currentIndex]['emergency_contact_relation'] ?? '') === $rel ? 'selected' : '' }}>
+                                            {{ $rel }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
