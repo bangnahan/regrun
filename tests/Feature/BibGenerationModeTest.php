@@ -173,4 +173,18 @@ class BibGenerationModeTest extends TestCase
         $participant->refresh();
         $this->assertEquals('VIP-999', $participant->bib_number);
     }
+
+    public function test_admin_can_view_participants_page_with_all_variables()
+    {
+        $admin = User::first();
+
+        $response = $this->actingAs($admin)->get(route('admin.participants'));
+
+        $response->assertStatus(200);
+        $response->assertViewHas('participants');
+        $response->assertViewHas('events');
+        $response->assertViewHas('categories');
+        $response->assertViewHas('jerseySizes');
+        $response->assertViewHas('unassignedBibCount');
+    }
 }

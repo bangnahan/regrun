@@ -296,6 +296,7 @@ class AdminController extends Controller
         $participants = $query->paginate(25)->withQueryString();
         $events = Event::all();
         $categories = TicketCategory::all();
+        $jerseySizes = JerseySize::orderBy('sort_order')->get();
         $unassignedBibCount = Participant::whereHas('transaction', fn($q) => $q->where('status', 'PAID'))->whereNull('bib_number')->count();
 
         return view('admin.participants', compact('participants', 'events', 'categories', 'jerseySizes', 'unassignedBibCount'));
