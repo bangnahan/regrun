@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\TripayCallbackController;
 use Illuminate\Support\Facades\Route;
@@ -13,8 +14,21 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Public Registration Multi-Step Wizard
-Route::get('/', [RegistrationController::class, 'index'])->name('register.index');
+// Platform Jelatix Homepage (Delegates to event wizard if on custom event domain)
+Route::get('/', [PageController::class, 'home'])->name('register.index');
+
+// Halaman Kepatuhan Legalitas Merchant (Wajib Tripay)
+Route::get('/terms', [PageController::class, 'terms'])->name('page.terms');
+Route::get('/syarat-ketentuan', [PageController::class, 'terms']);
+
+Route::get('/privacy-policy', [PageController::class, 'privacy'])->name('page.privacy');
+Route::get('/kebijakan-privasi', [PageController::class, 'privacy']);
+
+Route::get('/refund-policy', [PageController::class, 'refund'])->name('page.refund');
+Route::get('/kebijakan-pengembalian', [PageController::class, 'refund']);
+
+Route::get('/contact', [PageController::class, 'contact'])->name('page.contact');
+Route::get('/kontak', [PageController::class, 'contact']);
 Route::get('/event/{slug}', [RegistrationController::class, 'index'])->name('register.event');
 Route::match(['get', 'post'], '/register/participants', [RegistrationController::class, 'stepParticipants'])->name('register.step_participants');
 Route::match(['get', 'post'], '/register/checkout', [RegistrationController::class, 'stepCheckout'])->name('register.step_checkout');
