@@ -162,10 +162,7 @@
 
                         <!-- Ukuran Jersey (XS to 5XL) -->
                         <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="font-bold text-slate-700">Ukuran Jersey Event <span class="text-rose-500">*</span></label>
-                                <span class="text-[11px] text-slate-400">Size chart di domain utama</span>
-                            </div>
+                            <label class="block font-bold text-slate-700 mb-1.5">Ukuran Jersey Event <span class="text-rose-500">*</span></label>
                             <select name="participants[{{ $currentIndex }}][jersey_size_id]" required class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.jersey_size_id') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white font-semibold">
                                 <option value="">-- Pilih Ukuran Jersey (XS - 5XL) --</option>
                                 @foreach($jerseySizes as $size)
