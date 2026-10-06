@@ -67,7 +67,8 @@ class CompliancePagesTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Hubungi Kami');
         $response->assertSee('hi@jelatix.com');
-        $response->assertSee('0812-3456-7890');
+        $response->assertSee('0819-1644-4458');
+        $response->assertSee('Pekanbaru');
 
         $aliasResponse = $this->get('/kontak');
         $aliasResponse->assertStatus(200);

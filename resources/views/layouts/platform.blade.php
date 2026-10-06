@@ -159,11 +159,11 @@
                         </p>
                         <p class="flex items-start gap-2">
                             <span class="text-slate-200">💬</span>
-                            <span>WhatsApp: <a href="https://wa.me/6281234567890" target="_blank" class="text-orange-400 hover:underline">0812-3456-7890</a></span>
+                            <span>WhatsApp: <a href="https://wa.me/6281916444458" target="_blank" class="text-orange-400 hover:underline">0819-1644-4458</a></span>
                         </p>
                         <p class="flex items-start gap-2">
                             <span class="text-slate-200">🏢</span>
-                            <span>Jakarta & Yogyakarta, Indonesia</span>
+                            <span>Kota Pekanbaru, Riau, Indonesia</span>
                         </p>
                         <p class="text-[11px] text-slate-500 pt-1">
                             Jam Kerja: Senin - Jumat (09:00 - 17:00 WIB)

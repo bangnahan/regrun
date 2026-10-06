@@ -113,7 +113,7 @@
                 <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs">
                     <div><strong>Layanan Bantuan Jelatix Ticketing</strong></div>
                     <div>Email: <a href="mailto:hi@jelatix.com" class="text-orange-600 underline">hi@jelatix.com</a></div>
-                    <div>WhatsApp: <a href="https://wa.me/6281234567890" class="text-orange-600 underline">0812-3456-7890</a></div>
+                    <div>WhatsApp: <a href="https://wa.me/6281916444458" class="text-orange-600 underline">0819-1644-4458</a></div>
                 </div>
             </div>
         </section>

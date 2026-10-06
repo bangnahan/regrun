@@ -135,8 +135,8 @@
             <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5 font-medium">
                 <div>&bull; <strong>Nama Platform:</strong> Jelatix Ticketing (jelatix.com)</div>
                 <div>&bull; <strong>Email Privasi:</strong> <a href="mailto:hi@jelatix.com" class="text-orange-600 underline">hi@jelatix.com</a></div>
-                <div>&bull; <strong>WhatsApp CS:</strong> 0812-3456-7890 / 0821-4603-9090</div>
-                <div>&bull; <strong>Alamat Operasional:</strong> Jl. Raya Utama No. 88, Jakarta Selatan, DKI Jakarta, Indonesia</div>
+                <div>&bull; <strong>WhatsApp CS:</strong> 0819-1644-4458</div>
+                <div>&bull; <strong>Alamat Operasional:</strong> Jl Tapah No 22, Kelurahan Tangkerang Barat, Kec. Marpoyan Damai, Kota Pekanbaru, Riau, Indonesia</div>
                 <div>&bull; <strong>Jam Layanan:</strong> Senin &ndash; Jumat, 09.00 &ndash; 17.00 WIB</div>
             </div>
         </section>
