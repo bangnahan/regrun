@@ -17,6 +17,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- Favicon & Brand Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
@@ -33,9 +39,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <!-- Brand Logo -->
             <a href="{{ route('register.index') }}" class="flex items-center gap-3 group">
-                <span class="w-10 h-10 rounded-xl bg-orange-600 group-hover:bg-orange-500 text-white flex items-center justify-center text-xl shadow-md shadow-orange-600/30 transition transform group-hover:scale-105">
-                    🏃
-                </span>
+                <div class="w-11 h-11 rounded-xl bg-orange-50 border border-orange-200/60 p-1.5 flex items-center justify-center shadow-xs transition transform group-hover:scale-105">
+                    <img src="{{ asset('images/jelatix-icon.png') }}" alt="Jelatix Logo" class="w-full h-full object-contain">
+                </div>
                 <div class="flex flex-col">
                     <span class="font-black text-2xl text-slate-950 tracking-tight leading-tight">Jelatix</span>
                     <span class="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Running Ticketing</span>
@@ -111,7 +117,9 @@
                 <!-- Col 1: Brand Info -->
                 <div class="lg:col-span-2 space-y-4">
                     <div class="flex items-center gap-3">
-                        <span class="w-9 h-9 rounded-xl bg-orange-600 text-white flex items-center justify-center text-lg font-black shadow">🏃</span>
+                        <div class="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-md">
+                            <img src="{{ asset('images/jelatix-icon.png') }}" alt="Jelatix Logo" class="w-full h-full object-contain">
+                        </div>
                         <span class="font-extrabold text-2xl text-white tracking-tight">Jelatix</span>
                     </div>
                     <p class="text-xs text-slate-400 leading-relaxed max-w-sm">

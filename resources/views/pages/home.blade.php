@@ -11,48 +11,73 @@
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(249,115,22,0.12),transparent_40%)]"></div>
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl space-y-6">
-            <!-- Badge -->
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-bold tracking-wide">
-                <span>🏃</span>
-                <span>PLATFORM TIKETING RESMI EVENT LARI INDONESIA</span>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Badge -->
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-bold tracking-wide">
+                    <img src="{{ asset('images/jelatix-icon.png') }}" alt="Jelatix" class="w-4 h-4 object-contain">
+                    <span>PLATFORM TIKETING RESMI EVENT LARI INDONESIA</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
+                    Dapatkan Tiket Race Impian Anda di <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500">Jelatix</span>
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
+                    Platform pemesanan tiket resmi untuk event lari di seluruh Indonesia. Dari 5K Fun Run, 10K Challenge, hingga Half & Full Marathon. Terintegrasi pembayaran instan Tripay (QRIS & Virtual Account) dan E-Ticket QR Code otomatis.
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
+                    <a href="#events" class="px-7 py-4 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-extrabold text-sm shadow-xl shadow-orange-600/30 transition text-center flex items-center justify-center gap-2">
+                        <span>Eksplorasi Event Lari</span>
+                        <span>&darr;</span>
+                    </a>
+                    <a href="{{ route('page.contact') }}" class="px-7 py-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-sm transition text-center flex items-center justify-center gap-2">
+                        <span>Kerjasama Organizer</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+
+                <!-- Trust Highlights -->
+                <div class="pt-8 flex flex-wrap items-center gap-6 text-xs text-slate-400 border-t border-slate-800/80">
+                    <div class="flex items-center gap-2">
+                        <span class="text-emerald-400 font-bold text-base">&check;</span>
+                        <span>100% Tiket Resmi & Terverifikasi</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-emerald-400 font-bold text-base">&check;</span>
+                        <span>Pembayaran Cepat QRIS & VA Tripay</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-emerald-400 font-bold text-base">&check;</span>
+                        <span>E-Ticket QR Langsung ke Email</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Headline -->
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
-                Dapatkan Tiket Race Impian Anda di <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500">Jelatix</span>
-            </h1>
-
-            <!-- Subtitle -->
-            <p class="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
-                Platform pemesanan tiket resmi untuk event lari di seluruh Indonesia. Dari 5K Fun Run, 10K Challenge, hingga Half & Full Marathon. Terintegrasi pembayaran instan Tripay (QRIS & Virtual Account) dan E-Ticket QR Code otomatis.
-            </p>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
-                <a href="#events" class="px-7 py-4 rounded-xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-extrabold text-sm shadow-xl shadow-orange-600/30 transition text-center flex items-center justify-center gap-2">
-                    <span>Eksplorasi Event Lari</span>
-                    <span>&darr;</span>
-                </a>
-                <a href="{{ route('page.contact') }}" class="px-7 py-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-sm transition text-center flex items-center justify-center gap-2">
-                    <span>Kerjasama Organizer</span>
-                    <span>&rarr;</span>
-                </a>
-            </div>
-
-            <!-- Trust Highlights -->
-            <div class="pt-8 flex flex-wrap items-center gap-6 text-xs text-slate-400 border-t border-slate-800/80">
-                <div class="flex items-center gap-2">
-                    <span class="text-emerald-400 font-bold text-base">&check;</span>
-                    <span>100% Tiket Resmi & Terverifikasi</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-emerald-400 font-bold text-base">&check;</span>
-                    <span>Pembayaran Cepat QRIS & VA Tripay</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-emerald-400 font-bold text-base">&check;</span>
-                    <span>E-Ticket QR Langsung ke Email</span>
+            <!-- Right Visual Brand Card -->
+            <div class="hidden lg:flex lg:col-span-4 justify-center">
+                <div class="relative w-72 p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 shadow-2xl shadow-orange-500/10 text-center">
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="w-36 h-36 mx-auto mb-4 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
+                        <img src="{{ asset('images/jelatix-logo.png') }}" alt="Jelatix Official" class="w-full h-full object-contain filter drop-shadow">
+                    </div>
+                    <h3 class="font-black text-xl text-white tracking-tight">Jelatix Ticketing</h3>
+                    <p class="text-xs text-slate-400 mt-1">Spesialis Sistem Pendaftaran &amp; Tiket Lari Indonesia</p>
+                    <div class="mt-4 pt-4 border-t border-slate-800 flex items-center justify-around text-center">
+                        <div>
+                            <div class="font-extrabold text-sm text-orange-400">QRIS &amp; VA</div>
+                            <div class="text-[10px] text-slate-400">Tripay Gateway</div>
+                        </div>
+                        <div class="w-px h-6 bg-slate-800"></div>
+                        <div>
+                            <div class="font-extrabold text-sm text-emerald-400">Instant QR</div>
+                            <div class="text-[10px] text-slate-400">Check-in RPC</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

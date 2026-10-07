@@ -7,6 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Favicon & Brand Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col md:flex-row">
@@ -14,10 +19,12 @@
     <aside class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col border-r border-slate-800">
         <div class="p-5 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <span class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white text-lg font-black shadow-lg">R</span>
+                <div class="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-md">
+                    <img src="{{ asset('images/jelatix-icon.png') }}" alt="Jelatix" class="w-full h-full object-contain">
+                </div>
                 <div>
-                    <h1 class="text-white font-bold text-base leading-tight">RegRun Admin</h1>
-                    <p class="text-xs text-slate-400">Multi-Event Organizer</p>
+                    <h1 class="text-white font-bold text-base leading-tight">Jelatix Admin</h1>
+                    <p class="text-xs text-slate-400">Event Ticketing Platform</p>
                 </div>
             </div>
         </div>

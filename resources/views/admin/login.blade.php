@@ -3,18 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Admin - RegRun</title>
+    <title>Login Admin - Jelatix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Favicon & Brand Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
 <body class="bg-slate-900 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl border border-slate-800">
         <div class="text-center mb-8">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white text-2xl font-black mx-auto mb-3 shadow-lg">
-                R
+            <div class="w-16 h-16 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-slate-100">
+                <img src="{{ asset('images/jelatix-icon.png') }}" alt="Jelatix" class="w-full h-full object-contain">
             </div>
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight">RegRun Admin</h1>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Jelatix Admin</h1>
             <p class="text-xs text-slate-500 mt-1">Sistem Manajemen Transaksi &amp; Pendaftaran Event Lari</p>
         </div>
 
