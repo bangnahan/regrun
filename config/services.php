@@ -40,6 +40,7 @@ return [
         'api_key' => env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi'),
         'private_key' => env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280'),
         'sandbox' => env('TRIPAY_SANDBOX', true),
+        'callback_url' => env('TRIPAY_CALLBACK_URL'),
     ],
 
     'mailketing' => [

@@ -19,9 +19,9 @@ class MailketingService
 
     public function __construct()
     {
-        $this->apiToken = SystemSetting::get('mailketing_api_token', config('services.mailketing.api_token', env('MAILKETING_API_TOKEN', '308b31d3313311776744479fa8fd7eb3')));
-        $this->senderEmail = SystemSetting::get('mailketing_sender_email', config('services.mailketing.sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')));
-        $this->senderName = SystemSetting::get('mailketing_sender_name', config('services.mailketing.sender_name', env('MAILKETING_SENDER_NAME', 'Panitia Event Lari')));
+        $this->apiToken = SystemSetting::get('mailketing_api_token', config('services.mailketing.api_token', '308b31d3313311776744479fa8fd7eb3'));
+        $this->senderEmail = SystemSetting::get('mailketing_sender_email', config('services.mailketing.sender_email', 'hi@jelatix.com'));
+        $this->senderName = SystemSetting::get('mailketing_sender_name', config('services.mailketing.sender_name', 'Panitia Event Lari'));
     }
 
     /**

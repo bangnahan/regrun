@@ -24,26 +24,26 @@ class TripayService
         if ($modeSetting !== null) {
             $this->isSandbox = ($modeSetting === 'sandbox');
         } else {
-            $this->isSandbox = (bool) SystemSetting::get('tripay_sandbox', config('services.tripay.sandbox', env('TRIPAY_SANDBOX', true)));
+            $this->isSandbox = (bool) SystemSetting::get('tripay_sandbox', config('services.tripay.sandbox', true));
         }
         $this->mode = $this->isSandbox ? 'sandbox' : 'production';
 
-        // 2. Load credentials based on active mode with graceful fallback to legacy keys and env
+        // 2. Load credentials based on active mode with graceful fallback to legacy keys and config
         if ($this->isSandbox) {
             $this->merchantCode = (string) (SystemSetting::get('tripay_sandbox_merchant_code')
-                ?: SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430'))));
+                ?: SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', 'T39430')));
             $this->apiKey = (string) (SystemSetting::get('tripay_sandbox_api_key')
-                ?: SystemSetting::get('tripay_api_key', config('services.tripay.api_key', env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi'))));
+                ?: SystemSetting::get('tripay_api_key', config('services.tripay.api_key', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi')));
             $this->privateKey = (string) (SystemSetting::get('tripay_sandbox_private_key')
-                ?: SystemSetting::get('tripay_private_key', config('services.tripay.private_key', env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280'))));
+                ?: SystemSetting::get('tripay_private_key', config('services.tripay.private_key', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280')));
             $this->baseUrl = 'https://tripay.co.id/api-sandbox/';
         } else {
             $this->merchantCode = (string) (SystemSetting::get('tripay_prod_merchant_code')
-                ?: SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', env('TRIPAY_MERCHANT_CODE', ''))));
+                ?: SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', '')));
             $this->apiKey = (string) (SystemSetting::get('tripay_prod_api_key')
-                ?: SystemSetting::get('tripay_api_key', config('services.tripay.api_key', env('TRIPAY_API_KEY', ''))));
+                ?: SystemSetting::get('tripay_api_key', config('services.tripay.api_key', '')));
             $this->privateKey = (string) (SystemSetting::get('tripay_prod_private_key')
-                ?: SystemSetting::get('tripay_private_key', config('services.tripay.private_key', env('TRIPAY_PRIVATE_KEY', ''))));
+                ?: SystemSetting::get('tripay_private_key', config('services.tripay.private_key', '')));
             $this->baseUrl = 'https://tripay.co.id/api/';
         }
     }
@@ -208,7 +208,7 @@ class TripayService
         $scheme = request()->isSecure() ? 'https://' : 'http://';
         $eventBaseUrl = $scheme . $domain;
 
-        $callbackUrl = env('TRIPAY_CALLBACK_URL');
+        $callbackUrl = config('services.tripay.callback_url');
         if (empty($callbackUrl)) {
             if (!str_contains($domain, 'localhost') && !str_contains($domain, '127.0.0.1')) {
                 $callbackUrl = rtrim($eventBaseUrl, '/') . '/api/tripay/callback';

@@ -1,0 +1,9 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    # Level 1 provides clean analysis for Eloquent models and catches bugs, undefined variables, and bad calls.
+    level: 1

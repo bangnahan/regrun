@@ -164,13 +164,13 @@ class Event extends Model
 
         // Global system settings
         if ($isSandbox) {
-            $merchant = (string) (SystemSetting::get('tripay_sandbox_merchant_code') ?: SystemSetting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430')));
-            $apiKey = (string) (SystemSetting::get('tripay_sandbox_api_key') ?: SystemSetting::get('tripay_api_key', env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi')));
-            $privKey = (string) (SystemSetting::get('tripay_sandbox_private_key') ?: SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280')));
+            $merchant = (string) (SystemSetting::get('tripay_sandbox_merchant_code') ?: SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', 'T39430')));
+            $apiKey = (string) (SystemSetting::get('tripay_sandbox_api_key') ?: SystemSetting::get('tripay_api_key', config('services.tripay.api_key', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi')));
+            $privKey = (string) (SystemSetting::get('tripay_sandbox_private_key') ?: SystemSetting::get('tripay_private_key', config('services.tripay.private_key', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280')));
         } else {
-            $merchant = (string) (SystemSetting::get('tripay_prod_merchant_code') ?: SystemSetting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', '')));
-            $apiKey = (string) (SystemSetting::get('tripay_prod_api_key') ?: SystemSetting::get('tripay_api_key', env('TRIPAY_API_KEY', '')));
-            $privKey = (string) (SystemSetting::get('tripay_prod_private_key') ?: SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', '')));
+            $merchant = (string) (SystemSetting::get('tripay_prod_merchant_code') ?: SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', '')));
+            $apiKey = (string) (SystemSetting::get('tripay_prod_api_key') ?: SystemSetting::get('tripay_api_key', config('services.tripay.api_key', '')));
+            $privKey = (string) (SystemSetting::get('tripay_prod_private_key') ?: SystemSetting::get('tripay_private_key', config('services.tripay.private_key', '')));
         }
 
         return [
@@ -190,16 +190,16 @@ class Event extends Model
         if (!empty($this->mailketing_api_token)) {
             return [
                 'api_token' => $this->mailketing_api_token,
-                'sender_email' => $this->mailketing_sender_email ?: SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')),
+                'sender_email' => $this->mailketing_sender_email ?: SystemSetting::get('mailketing_sender_email', config('services.mailketing.sender_email', 'hi@jelatix.com')),
                 'sender_name' => $this->mailketing_sender_name ?: ($this->title . ' Organizing Team'),
                 'is_custom' => true,
             ];
         }
 
         return [
-            'api_token' => (string) SystemSetting::get('mailketing_api_token', env('MAILKETING_API_TOKEN', '')),
-            'sender_email' => (string) SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')),
-            'sender_name' => (string) SystemSetting::get('mailketing_sender_name', env('MAILKETING_SENDER_NAME', 'Panitia Event Lari')),
+            'api_token' => (string) SystemSetting::get('mailketing_api_token', config('services.mailketing.api_token', '')),
+            'sender_email' => (string) SystemSetting::get('mailketing_sender_email', config('services.mailketing.sender_email', 'hi@jelatix.com')),
+            'sender_name' => (string) SystemSetting::get('mailketing_sender_name', config('services.mailketing.sender_name', 'Panitia Event Lari')),
             'is_custom' => false,
         ];
     }

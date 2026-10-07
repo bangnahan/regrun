@@ -821,9 +821,9 @@ class AdminController extends Controller
             'tripay_sandbox' => $mode === 'sandbox',
 
             // Sandbox Credentials
-            'tripay_sandbox_merchant_code' => SystemSetting::get('tripay_sandbox_merchant_code', SystemSetting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430'))),
-            'tripay_sandbox_api_key' => SystemSetting::get('tripay_sandbox_api_key', SystemSetting::get('tripay_api_key', env('TRIPAY_API_KEY', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi'))),
-            'tripay_sandbox_private_key' => SystemSetting::get('tripay_sandbox_private_key', SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280'))),
+            'tripay_sandbox_merchant_code' => SystemSetting::get('tripay_sandbox_merchant_code', SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', 'T39430'))),
+            'tripay_sandbox_api_key' => SystemSetting::get('tripay_sandbox_api_key', SystemSetting::get('tripay_api_key', config('services.tripay.api_key', 'DEV-KTItaLxH6EY0VqEkbWrPFgkM8yunO9Btd7bMmNMi'))),
+            'tripay_sandbox_private_key' => SystemSetting::get('tripay_sandbox_private_key', SystemSetting::get('tripay_private_key', config('services.tripay.private_key', 'yNQJm-Ozybz-wRDDa-ncqiY-PZ280'))),
 
             // Production Credentials
             'tripay_prod_merchant_code' => SystemSetting::get('tripay_prod_merchant_code', ''),
@@ -831,13 +831,13 @@ class AdminController extends Controller
             'tripay_prod_private_key' => SystemSetting::get('tripay_prod_private_key', ''),
 
             // Legacy Fallbacks
-            'tripay_merchant_code' => SystemSetting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', 'T39430')),
-            'tripay_api_key' => SystemSetting::get('tripay_api_key', env('TRIPAY_API_KEY', '')),
-            'tripay_private_key' => SystemSetting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', '')),
+            'tripay_merchant_code' => SystemSetting::get('tripay_merchant_code', config('services.tripay.merchant_code', 'T39430')),
+            'tripay_api_key' => SystemSetting::get('tripay_api_key', config('services.tripay.api_key', '')),
+            'tripay_private_key' => SystemSetting::get('tripay_private_key', config('services.tripay.private_key', '')),
 
-            'mailketing_api_token' => SystemSetting::get('mailketing_api_token', env('MAILKETING_API_TOKEN', '')),
-            'mailketing_sender_email' => SystemSetting::get('mailketing_sender_email', env('MAILKETING_SENDER_EMAIL', 'hi@jelatix.com')),
-            'mailketing_sender_name' => SystemSetting::get('mailketing_sender_name', env('MAILKETING_SENDER_NAME', 'Panitia Event Lari')),
+            'mailketing_api_token' => SystemSetting::get('mailketing_api_token', config('services.mailketing.api_token', '')),
+            'mailketing_sender_email' => SystemSetting::get('mailketing_sender_email', config('services.mailketing.sender_email', 'hi@jelatix.com')),
+            'mailketing_sender_name' => SystemSetting::get('mailketing_sender_name', config('services.mailketing.sender_name', 'Panitia Event Lari')),
             'auto_generate_bib' => SystemSetting::get('auto_generate_bib', '1'),
         ];
 
