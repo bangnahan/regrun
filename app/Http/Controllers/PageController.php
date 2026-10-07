@@ -20,14 +20,8 @@ class PageController extends Controller
         // Check if the current domain is a dedicated event domain (not the main platform domain)
         $isDedicatedDomain = false;
         if (!in_array($cleanDomain, ['jelatix.com', 'www.jelatix.com', '127.0.0.1', 'localhost', 'regrun.test', 'portal.regrun.test'])) {
-            $domainRecord = EventDomain::where('domain', $cleanDomain)
-                ->where('is_active', true)
-                ->with('event')
-                ->first();
-
-            if ($domainRecord && $domainRecord->event && $domainRecord->event->is_active) {
-                $isDedicatedDomain = true;
-            } elseif (Event::where('custom_domain', $cleanDomain)->where('is_active', true)->exists()) {
+            $matchedEvent = Event::getActiveEvent(null, $cleanDomain);
+            if ($matchedEvent && $matchedEvent->is_active) {
                 $isDedicatedDomain = true;
             }
         }
