@@ -23,6 +23,7 @@ class Event extends Model
         'rpc_end_date',
         'rpc_location',
         'banner_image',
+        'hero_image',
         'logo_url',
         'primary_color',
         'secondary_color',
@@ -202,5 +203,23 @@ class Event extends Model
             'sender_name' => (string) SystemSetting::get('mailketing_sender_name', config('services.mailketing.sender_name', 'Panitia Event Lari')),
             'is_custom' => false,
         ];
+    }
+
+    /**
+     * Get the resolved public URL for the hero image.
+     * Falls back to banner_image if hero_image is not set.
+     */
+    public function getHeroImageUrlAttribute(): ?string
+    {
+        $image = $this->hero_image ?: $this->banner_image;
+        if (empty($image)) {
+            return null;
+        }
+
+        if (str_starts_with($image, 'http://') || str_starts_with($image, 'https://')) {
+            return $image;
+        }
+
+        return asset($image);
     }
 }

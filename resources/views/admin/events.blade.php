@@ -90,6 +90,12 @@
                                 </span>
                             @endif
 
+                            @if($ev->hero_image)
+                                <span class="px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200 text-[10px] font-bold flex items-center gap-1" title="Hero image aktif di beranda">
+                                    <span>🖼️</span> Hero Image
+                                </span>
+                            @endif
+
                             <span class="text-[11px] text-slate-500 font-medium">
                                 ({{ $ev->transactions_count }} Transaksi &bull; {{ $ev->participants_count }} Peserta)
                             </span>
@@ -168,7 +174,7 @@
 
             <!-- Inline Edit Event Form Accordion -->
             <div x-show="showEditEvent" x-collapse class="p-6 bg-slate-50/80 border-b border-slate-200">
-                <form action="{{ route('admin.events.update', ['id' => $ev->id]) }}" method="POST" class="space-y-4">
+                <form action="{{ route('admin.events.update', ['id' => $ev->id]) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                     @csrf
                     
                     <div class="flex items-center justify-between pb-2 border-b border-slate-200">
@@ -254,6 +260,60 @@
                             <div class="flex items-center gap-2">
                                 <input type="color" name="primary_color" value="{{ $ev->primary_color ?: '#ea580c' }}" class="w-10 h-9 p-1 rounded-lg border border-slate-300 cursor-pointer">
                                 <input type="text" value="{{ $ev->primary_color ?: '#ea580c' }}" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Hero Image Upload Section -->
+                        <div class="sm:col-span-4 p-4 rounded-xl bg-orange-50/60 border border-orange-200" x-data="{ newHeroPreview: null }">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                <div>
+                                    <label class="block font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                                        <span>🖼️</span> Hero Image Event (Ditampilkan di Beranda &amp; Banner Event)
+                                    </label>
+                                    <p class="text-[11px] text-slate-500">Gambar utama yang tampil di beranda Jelatix dan header kartu event. Disarankan landscape 16:9 (1920x1080 atau 1200x675 px), maks 5MB (JPG, PNG, WebP).</p>
+                                </div>
+                                @if($ev->hero_image)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">
+                                        <span>&check;</span> Hero Image Aktif
+                                    </span>
+                                @endif
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start pt-2">
+                                @if($ev->hero_image)
+                                    <div class="md:col-span-4 space-y-2">
+                                        <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 group shadow-sm aspect-video">
+                                            <img src="{{ $ev->hero_image_url }}" alt="Hero {{ $ev->title }}" class="w-full h-full object-cover">
+                                            <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                                                <a href="{{ $ev->hero_image_url }}" target="_blank" class="px-2.5 py-1 rounded-lg bg-white/95 text-slate-900 text-[11px] font-bold shadow hover:bg-white">
+                                                    Lihat Penuh ↗
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <label class="flex items-center gap-1.5 cursor-pointer text-[11px] font-semibold text-rose-600 hover:text-rose-700">
+                                            <input type="checkbox" name="delete_hero_image" value="1" class="w-3.5 h-3.5 rounded text-rose-600 border-slate-300 focus:ring-rose-500">
+                                            <span>Hapus Hero Image ini</span>
+                                        </label>
+                                    </div>
+                                @endif
+
+                                <div class="{{ $ev->hero_image ? 'md:col-span-8' : 'md:col-span-12' }} space-y-2">
+                                    <label class="block text-[11px] font-bold text-slate-700">
+                                        {{ $ev->hero_image ? 'Ganti dengan File Gambar Baru:' : 'Pilih File Hero Image:' }}
+                                    </label>
+                                    <input type="file" 
+                                           name="hero_image" 
+                                           accept="image/png,image/jpeg,image/webp,image/gif"
+                                           @change="const file = $event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => newHeroPreview = e.target.result; reader.readAsDataURL(file); } else { newHeroPreview = null; }"
+                                           class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-100 file:text-orange-800 hover:file:bg-orange-200 cursor-pointer">
+                                    
+                                    <template x-if="newHeroPreview">
+                                        <div class="mt-2 p-2 rounded-xl bg-white border border-slate-200 space-y-1">
+                                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Preview Gambar Baru:</span>
+                                            <img :src="newHeroPreview" alt="Preview Gambar Baru" class="max-h-36 rounded-lg object-cover w-full">
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
 
@@ -576,7 +636,7 @@
                 </button>
             </div>
 
-            <form action="{{ route('admin.events.store') }}" method="POST" class="space-y-4 text-xs">
+            <form action="{{ route('admin.events.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
                 @csrf
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -636,6 +696,25 @@
                             <option value="1" selected>⚡ Otomatis: Generate nomor BIB langsung saat transaksi lunas (Rekomendasi)</option>
                             <option value="0">⏳ Tunda: Tidak perlu generate BIB dahulu (Dialokasikan nanti / saat RPC)</option>
                         </select>
+                    </div>
+
+                    <!-- Hero Image Upload -->
+                    <div class="sm:col-span-2 p-3.5 rounded-xl bg-orange-50/60 border border-orange-200" x-data="{ createHeroPreview: null }">
+                        <label class="block font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                            <span>🖼️</span> Hero Image Event (Opsional)
+                        </label>
+                        <p class="text-[11px] text-slate-500 mb-2">Akan ditampilkan di beranda utama Jelatix dan kartu event. Rekomendasi landscape 16:9, maks 5MB (JPG, PNG, WebP).</p>
+                        <input type="file" 
+                               name="hero_image" 
+                               accept="image/png,image/jpeg,image/webp,image/gif"
+                               @change="const file = $event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => createHeroPreview = e.target.result; reader.readAsDataURL(file); } else { createHeroPreview = null; }"
+                               class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-100 file:text-orange-800 hover:file:bg-orange-200 cursor-pointer">
+                        <template x-if="createHeroPreview">
+                            <div class="mt-2.5 p-2 rounded-xl bg-white border border-slate-200 space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Preview Gambar:</span>
+                                <img :src="createHeroPreview" alt="Preview Hero" class="max-h-36 rounded-lg object-cover w-full">
+                            </div>
+                        </template>
                     </div>
 
                     <div class="sm:col-span-2 space-y-2 pt-1">

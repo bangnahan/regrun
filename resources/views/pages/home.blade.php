@@ -4,15 +4,26 @@
 ])
 
 @section('content')
+@php
+    $featuredEvent = $events->where('is_default', true)->first() ?? $events->first();
+    $featuredHeroImage = $featuredEvent?->hero_image_url;
+@endphp
+
 <!-- Hero Section -->
 <section class="relative bg-gradient-to-br from-slate-950 via-slate-900 to-orange-950 text-white overflow-hidden py-20 lg:py-28 border-b border-slate-800">
+    @if($featuredHeroImage)
+        <!-- Dynamic Hero Image Backdrop -->
+        <div class="absolute inset-0 bg-cover bg-center opacity-25 filter blur-[0.5px] scale-105" style="background-image: url('{{ $featuredHeroImage }}');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/85 to-slate-950/60"></div>
+    @endif
+
     <!-- Subtle Background Glow -->
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(234,88,12,0.18),transparent_50%)]"></div>
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(249,115,22,0.12),transparent_40%)]"></div>
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            <div class="lg:col-span-8 space-y-6">
+            <div class="{{ $featuredEvent && $featuredHeroImage ? 'lg:col-span-7' : 'lg:col-span-8' }} space-y-6">
                 <!-- Badge -->
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-bold tracking-wide">
                     <img src="{{ asset('images/jelatix-icon.png') }}" alt="Jelatix" class="w-4 h-4 object-contain">
@@ -58,28 +69,91 @@
                 </div>
             </div>
 
-            <!-- Right Visual Brand Card -->
-            <div class="hidden lg:flex lg:col-span-4 justify-center">
-                <div class="relative w-72 p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 shadow-2xl shadow-orange-500/10 text-center">
-                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
-                    <div class="w-36 h-36 mx-auto mb-4 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-                        <img src="{{ asset('images/jelatix-logo.png') }}" alt="Jelatix Official" class="w-full h-full object-contain filter drop-shadow">
-                    </div>
-                    <h3 class="font-black text-xl text-white tracking-tight">Jelatix Ticketing</h3>
-                    <p class="text-xs text-slate-400 mt-1">Spesialis Sistem Pendaftaran &amp; Tiket Lari Indonesia</p>
-                    <div class="mt-4 pt-4 border-t border-slate-800 flex items-center justify-around text-center">
-                        <div>
-                            <div class="font-extrabold text-sm text-orange-400">QRIS &amp; VA</div>
-                            <div class="text-[10px] text-slate-400">Tripay Gateway</div>
+            @if($featuredEvent && $featuredHeroImage)
+                <!-- Right Featured Race Hero Card -->
+                <div class="hidden lg:flex lg:col-span-5 justify-center">
+                    @php
+                        $featDomain = $featuredEvent->getPrimaryDomain();
+                        $featUrl = $featDomain ? ('https://' . $featDomain) : route('register.event', ['slug' => $featuredEvent->slug]);
+                        $featMinPrice = $featuredEvent->ticketCategories->min('current_price');
+                    @endphp
+                    <div class="relative w-full max-w-md rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-orange-500/20 overflow-hidden group hover:border-orange-500/50 transition duration-300">
+                        <!-- Hero Image Container with Badges -->
+                        <div class="relative h-60 w-full overflow-hidden bg-slate-950">
+                            <img src="{{ $featuredHeroImage }}" alt="{{ $featuredEvent->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-black/30"></div>
+                            
+                            <div class="absolute top-3.5 left-3.5 flex items-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-600/90 backdrop-blur-md text-white text-[10px] font-black tracking-wider uppercase shadow-lg">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                                    FEATURED RACE
+                                </span>
+                            </div>
+
+                            @if($featuredEvent->custom_domain)
+                                <div class="absolute top-3.5 right-3.5">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-orange-200 text-[10px] font-mono border border-white/10">
+                                        🌐 {{ $featuredEvent->custom_domain }}
+                                    </span>
+                                </div>
+                            @endif
+
+                            <div class="absolute bottom-3 left-4 right-4 text-white">
+                                <h3 class="font-black text-xl leading-tight line-clamp-1 group-hover:text-orange-400 transition">{{ $featuredEvent->title }}</h3>
+                                <p class="text-xs text-slate-300 flex items-center gap-1.5 mt-1">
+                                    <span>📍</span> <span>{{ $featuredEvent->venue_name }}</span>
+                                </p>
+                            </div>
                         </div>
-                        <div class="w-px h-6 bg-slate-800"></div>
-                        <div>
-                            <div class="font-extrabold text-sm text-emerald-400">Instant QR</div>
-                            <div class="text-[10px] text-slate-400">Check-in RPC</div>
+
+                        <!-- Event Meta Details & CTA -->
+                        <div class="p-5 space-y-4">
+                            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-800/70 p-3 rounded-2xl border border-slate-700/60">
+                                <div>
+                                    <div class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Tanggal Race</div>
+                                    <div class="font-extrabold text-white text-xs mt-0.5">
+                                        {{ $featuredEvent->race_date ? $featuredEvent->race_date->translatedFormat('d M Y') : 'Segera' }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Mulai Dari</div>
+                                    <div class="font-black text-orange-400 text-xs mt-0.5">
+                                        {{ $featMinPrice ? 'Rp ' . number_format($featMinPrice, 0, ',', '.') : 'Hubungi Panitia' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a href="{{ $featUrl }}" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs tracking-wider uppercase transition shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2">
+                                <span>Daftar Race Ini Sekarang</span>
+                                <span>&rarr;</span>
+                            </a>
                         </div>
                     </div>
                 </div>
-            </div>
+            @else
+                <!-- Default Jelatix Ticketing Brand Card -->
+                <div class="hidden lg:flex lg:col-span-4 justify-center">
+                    <div class="relative w-72 p-6 rounded-3xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 shadow-2xl shadow-orange-500/10 text-center">
+                        <div class="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="w-36 h-36 mx-auto mb-4 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
+                            <img src="{{ asset('images/jelatix-logo.png') }}" alt="Jelatix Official" class="w-full h-full object-contain filter drop-shadow">
+                        </div>
+                        <h3 class="font-black text-xl text-white tracking-tight">Jelatix Ticketing</h3>
+                        <p class="text-xs text-slate-400 mt-1">Spesialis Sistem Pendaftaran &amp; Tiket Lari Indonesia</p>
+                        <div class="mt-4 pt-4 border-t border-slate-800 flex items-center justify-around text-center">
+                            <div>
+                                <div class="font-extrabold text-sm text-orange-400">QRIS &amp; VA</div>
+                                <div class="text-[10px] text-slate-400">Tripay Gateway</div>
+                            </div>
+                            <div class="w-px h-6 bg-slate-800"></div>
+                            <div>
+                                <div class="font-extrabold text-sm text-emerald-400">Instant QR</div>
+                                <div class="text-[10px] text-slate-400">Check-in RPC</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </section>
@@ -122,7 +196,9 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
                     <!-- Event Banner / Poster Header -->
                     <div class="relative h-48 bg-gradient-to-br from-slate-900 to-orange-950 overflow-hidden flex items-center justify-center p-6 text-white text-center">
-                        @if($event->banner_image)
+                        @if($event->hero_image_url)
+                            <img src="{{ $event->hero_image_url }}" alt="{{ $event->title }}" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-500">
+                        @elseif($event->banner_image)
                             <img src="{{ $event->banner_image }}" alt="{{ $event->title }}" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition duration-500">
                         @endif
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent"></div>

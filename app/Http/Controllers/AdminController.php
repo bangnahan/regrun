@@ -478,6 +478,7 @@ class AdminController extends Controller
             'tripay_api_key' => 'nullable|string',
             'tripay_private_key' => 'nullable|string',
             'mailketing_api_token' => 'nullable|string',
+            'hero_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
         ]);
 
         $isDefault = $request->boolean('is_default');
@@ -486,6 +487,18 @@ class AdminController extends Controller
         }
 
         $cleanDomain = $request->custom_domain ? EventDomain::normalizeDomain($request->custom_domain) : null;
+
+        $heroImagePath = null;
+        if ($request->hasFile('hero_image')) {
+            $file = $request->file('hero_image');
+            $uploadDir = public_path('uploads/events');
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $filename = 'hero_' . Str::slug($request->slug) . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $filename);
+            $heroImagePath = 'uploads/events/' . $filename;
+        }
 
         $event = Event::create([
             'title' => $request->title,
@@ -499,6 +512,7 @@ class AdminController extends Controller
             'rpc_location' => $request->rpc_location,
             'custom_domain' => $cleanDomain,
             'description' => $request->description,
+            'hero_image' => $heroImagePath,
             'logo_url' => $request->logo_url,
             'primary_color' => $request->primary_color ?: '#ea580c',
             'tripay_merchant_code' => $request->tripay_merchant_code,
@@ -581,6 +595,7 @@ class AdminController extends Controller
             'tripay_api_key' => 'nullable|string',
             'tripay_private_key' => 'nullable|string',
             'mailketing_api_token' => 'nullable|string',
+            'hero_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
         ]);
 
         $isDefault = $request->boolean('is_default');
@@ -589,6 +604,30 @@ class AdminController extends Controller
         }
 
         $cleanDomain = $request->custom_domain ? EventDomain::normalizeDomain($request->custom_domain) : null;
+
+        $heroImagePath = $event->hero_image;
+
+        if ($request->boolean('delete_hero_image')) {
+            if ($heroImagePath && !str_starts_with($heroImagePath, 'http') && file_exists(public_path($heroImagePath))) {
+                @unlink(public_path($heroImagePath));
+            }
+            $heroImagePath = null;
+        }
+
+        if ($request->hasFile('hero_image')) {
+            if ($heroImagePath && !str_starts_with($heroImagePath, 'http') && file_exists(public_path($heroImagePath))) {
+                @unlink(public_path($heroImagePath));
+            }
+
+            $file = $request->file('hero_image');
+            $uploadDir = public_path('uploads/events');
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $filename = 'hero_' . Str::slug($request->slug) . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $filename);
+            $heroImagePath = 'uploads/events/' . $filename;
+        }
 
         $event->update([
             'title' => $request->title,
@@ -602,6 +641,7 @@ class AdminController extends Controller
             'rpc_location' => $request->rpc_location,
             'custom_domain' => $cleanDomain,
             'description' => $request->description,
+            'hero_image' => $heroImagePath,
             'logo_url' => $request->logo_url,
             'primary_color' => $request->primary_color ?: '#ea580c',
             'tripay_merchant_code' => $request->tripay_merchant_code,
