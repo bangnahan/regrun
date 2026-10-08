@@ -78,37 +78,38 @@
                         $featMinPrice = $featuredEvent->ticketCategories->min('current_price');
                     @endphp
                     <div class="relative w-full max-w-md rounded-3xl bg-slate-900/90 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-orange-500/20 overflow-hidden group hover:border-orange-500/50 transition duration-300">
-                        <!-- Hero Image Container with Badges -->
-                        <div class="relative h-60 w-full overflow-hidden bg-slate-950">
-                            <img src="{{ $featuredHeroImage }}" alt="{{ $featuredEvent->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-black/30"></div>
-                            
-                            <div class="absolute top-3.5 left-3.5 flex items-center gap-2">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-600/90 backdrop-blur-md text-white text-[10px] font-black tracking-wider uppercase shadow-lg">
+                        <!-- Clean Hero Image Container (Tidak ditimpa teks judul) -->
+                        <div class="relative aspect-[16/9] w-full overflow-hidden bg-slate-950">
+                            <img src="{{ $featuredHeroImage }}" alt="{{ $featuredEvent->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        </div>
+
+                        <!-- Event Meta Details & CTA di bawah Hero Image -->
+                        <div class="p-6 space-y-4">
+                            <!-- Badges -->
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-600/90 text-white text-[10px] font-black tracking-wider uppercase shadow">
                                     <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
                                     FEATURED RACE
                                 </span>
-                            </div>
-
-                            @if($featuredEvent->custom_domain)
-                                <div class="absolute top-3.5 right-3.5">
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-orange-200 text-[10px] font-mono border border-white/10">
+                                @if($featuredEvent->custom_domain)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800 text-orange-300 text-[10px] font-mono border border-slate-700">
                                         🌐 {{ $featuredEvent->custom_domain }}
                                     </span>
-                                </div>
-                            @endif
+                                @endif
+                            </div>
 
-                            <div class="absolute bottom-3 left-4 right-4 text-white">
-                                <h3 class="font-black text-xl leading-tight line-clamp-1 group-hover:text-orange-400 transition">{{ $featuredEvent->title }}</h3>
-                                <p class="text-xs text-slate-300 flex items-center gap-1.5 mt-1">
-                                    <span>📍</span> <span>{{ $featuredEvent->venue_name }}</span>
+                            <!-- Title & Venue -->
+                            <div>
+                                <h3 class="font-black text-xl text-white leading-snug group-hover:text-orange-400 transition">
+                                    {{ $featuredEvent->title }}
+                                </h3>
+                                <p class="text-xs text-slate-300 flex items-center gap-1.5 mt-1.5">
+                                    <span class="text-rose-400">📍</span> <span>{{ $featuredEvent->venue_name }}</span>
                                 </p>
                             </div>
-                        </div>
 
-                        <!-- Event Meta Details & CTA -->
-                        <div class="p-5 space-y-4">
-                            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-800/70 p-3 rounded-2xl border border-slate-700/60">
+                            <!-- Meta Grid -->
+                            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-800/80 p-3 rounded-2xl border border-slate-700/60">
                                 <div>
                                     <div class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Tanggal Race</div>
                                     <div class="font-extrabold text-white text-xs mt-0.5">
@@ -193,41 +194,62 @@
                     $activeCategories = $event->ticketCategories;
                     $minPrice = $activeCategories->min('current_price') ?? 0;
                 @endphp
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
-                    <!-- Event Banner / Poster Header -->
-                    <div class="relative h-48 bg-gradient-to-br from-slate-900 to-orange-950 overflow-hidden flex items-center justify-center p-6 text-white text-center">
+                <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group">
+                    <!-- Clean Hero Image Header (Bebas dari timpaan teks judul / info) -->
+                    <div class="relative aspect-[16/9] w-full bg-slate-950 overflow-hidden">
                         @if($event->hero_image_url)
-                            <img src="{{ $event->hero_image_url }}" alt="{{ $event->title }}" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-500">
+                            <img src="{{ $event->hero_image_url }}" alt="{{ $event->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         @elseif($event->banner_image)
-                            <img src="{{ $event->banner_image }}" alt="{{ $event->title }}" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition duration-500">
+                            <img src="{{ $event->banner_image }}" alt="{{ $event->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        @else
+                            <div class="w-full h-full bg-gradient-to-br from-slate-900 via-orange-950 to-slate-950 flex flex-col items-center justify-center p-6 text-white text-center">
+                                <img src="{{ asset('images/jelatix-icon.png') }}" alt="Jelatix" class="w-12 h-12 object-contain opacity-30 mb-2">
+                                <span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">Jelatix Running Event</span>
+                            </div>
                         @endif
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent"></div>
-                        <div class="relative z-10 space-y-1">
-                            <span class="inline-block px-2.5 py-0.5 rounded-full bg-orange-500/90 text-white font-bold text-[10px] uppercase tracking-wider mb-1">
-                                Registrasi Dibuka
-                            </span>
-                            <h3 class="font-black text-xl leading-tight group-hover:text-orange-400 transition">
-                                {{ $event->title }}
-                            </h3>
-                            <p class="text-[11px] text-slate-300 flex items-center justify-center gap-1">
-                                <span>📍</span>
-                                <span>{{ $event->venue_name }}</span>
-                            </p>
-                        </div>
                     </div>
 
-                    <!-- Event Details Body -->
+                    <!-- Event Details Body (Semua teks judul, badge, & info ada di sini) -->
                     <div class="p-6 flex-1 flex flex-col justify-between space-y-5">
-                        <div class="space-y-4">
-                            <!-- Date & Time -->
+                        <div class="space-y-3.5">
+                            <!-- Badges Status Bar -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Registrasi Dibuka
+                                </span>
+                                @if($event->is_default)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 text-[10px] font-bold">
+                                        ⭐ Event Utama
+                                    </span>
+                                @endif
+                                @if($primaryDomain)
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-mono">
+                                        🌐 {{ $primaryDomain }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            <!-- Event Title & Venue -->
+                            <div>
+                                <h3 class="font-black text-xl text-slate-900 leading-snug group-hover:text-orange-600 transition">
+                                    {{ $event->title }}
+                                </h3>
+                                <p class="text-xs text-slate-500 flex items-center gap-1.5 mt-1.5 font-medium">
+                                    <span class="text-rose-500">📍</span>
+                                    <span>{{ $event->venue_name }}</span>
+                                </p>
+                            </div>
+
+                            <!-- Date & Time Info -->
                             <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 <div>
                                     <div class="text-slate-400 text-[10px] font-semibold uppercase">Tanggal Race</div>
-                                    <div class="font-bold text-slate-800">{{ $event->race_date ? $event->race_date->translatedFormat('d M Y') : 'Segera Diumumkan' }}</div>
+                                    <div class="font-bold text-slate-800 mt-0.5">{{ $event->race_date ? $event->race_date->translatedFormat('d M Y') : 'Segera Diumumkan' }}</div>
                                 </div>
                                 <div>
                                     <div class="text-slate-400 text-[10px] font-semibold uppercase">Waktu Start</div>
-                                    <div class="font-bold text-slate-800">{{ $event->race_start_time ? substr($event->race_start_time, 0, 5) . ' WIB' : 'Pagi Hari' }}</div>
+                                    <div class="font-bold text-slate-800 mt-0.5">{{ $event->race_start_time ? substr($event->race_start_time, 0, 5) . ' WIB' : 'Pagi Hari' }}</div>
                                 </div>
                             </div>
 
@@ -254,10 +276,10 @@
                             </div>
                         </div>
 
-                        <!-- Price & CTA -->
+                        <!-- Price & CTA Button -->
                         <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                             <div>
-                                <div class="text-slate-400 text-[10px]">Mulai dari</div>
+                                <div class="text-slate-400 text-[10px] font-semibold uppercase">Mulai dari</div>
                                 <div class="font-black text-slate-900 text-base">
                                     Rp {{ number_format($minPrice, 0, ',', '.') }}
                                 </div>
