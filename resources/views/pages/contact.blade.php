@@ -140,16 +140,22 @@
         </div>
 
         <!-- Partnership for Race Organizers -->
-        <div class="bg-slate-900 text-white rounded-2xl p-8 sm:p-10 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div id="kerjasama" class="bg-gradient-to-br from-slate-900 via-slate-950 to-orange-950/40 text-white rounded-2xl p-8 sm:p-10 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 scroll-mt-24 shadow-lg">
             <div class="space-y-2 text-center md:text-left">
-                <h3 class="text-lg font-black tracking-tight">Ingin Menggunakan Jelatix untuk Event Lari Anda?</h3>
-                <p class="text-xs sm:text-sm text-slate-400 max-w-xl">
+                <span class="inline-block px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-black uppercase tracking-wider border border-orange-500/30">
+                    Kemitraan Race Organizer
+                </span>
+                <h3 class="text-lg font-black tracking-tight text-white">Ingin Menggunakan Jelatix untuk Event Lari Anda?</h3>
+                <p class="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
                     Kami menyediakan sistem multi-step wizard, custom domain acara lari Anda sendiri, integrasi QRIS/VA otomatis, rekap ukuran jersey pabrik, dan sistem scanner Racepack (RPC).
                 </p>
             </div>
-            <div class="shrink-0 flex items-center gap-3">
-                <a href="mailto:hi@jelatix.com?subject=Kerjasama%20Event%20Lari%20-%20Jelatix" class="px-5 py-3 rounded-xl bg-white text-slate-900 font-bold text-xs hover:bg-slate-100 transition shadow-sm">
-                    Kerjasama Event &rarr;
+            <div class="shrink-0 flex flex-wrap items-center justify-center gap-3">
+                <a href="https://wa.me/6281916444458?text=Halo%20Tim%20Jelatix%2C%20saya%20tertarik%20untuk%20kerjasama%20penyelenggaraan%20event%20lari%20menggunakan%20platform%20Jelatix.%20Mohon%20informasi%20selengkapnya." target="_blank" rel="noopener" class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-md shadow-emerald-600/30 inline-flex items-center gap-2">
+                    <span>💬</span> Kerjasama Event (WhatsApp) &rarr;
+                </a>
+                <a href="mailto:hi@jelatix.com?subject=Kerjasama%20Event%20Lari%20-%20Jelatix" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs transition shadow-sm inline-flex items-center gap-2">
+                    <span>✉️</span> Email Kemitraan
                 </a>
             </div>
         </div>

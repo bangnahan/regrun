@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Event;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -69,8 +68,18 @@ class CompliancePagesTest extends TestCase
         $response->assertSee('hi@jelatix.com');
         $response->assertSee('0819-1644-4458');
         $response->assertSee('Pekanbaru');
+        $response->assertSee('id="kerjasama"', false);
+        $response->assertSee('Kerjasama Event (WhatsApp)');
 
         $aliasResponse = $this->get('/kontak');
         $aliasResponse->assertStatus(200);
+    }
+
+    public function test_application_timezone_is_wib(): void
+    {
+        $this->assertSame('Asia/Jakarta', config('app.timezone'));
+        $this->assertSame('Asia/Jakarta', date_default_timezone_get());
+        $this->assertSame('Asia/Jakarta', now()->timezoneName);
+        $this->assertSame(25200, now()->offset); // UTC+7 (7 * 3600 = 25200 seconds)
     }
 }

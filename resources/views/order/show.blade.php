@@ -55,7 +55,7 @@
             </div>
             <div>
                 <div class="text-slate-400 font-medium">Waktu Transaksi</div>
-                <div class="font-bold text-slate-800">{{ $transaction->created_at->format('d/m/Y H:i') }}</div>
+                <div class="font-bold text-slate-800">{{ $transaction->created_at->format('d/m/Y H:i') }} WIB</div>
             </div>
         </div>
     </div>

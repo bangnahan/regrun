@@ -46,7 +46,7 @@
                         <span>Eksplorasi Event Lari</span>
                         <span>&darr;</span>
                     </a>
-                    <a href="{{ route('page.contact') }}" class="px-7 py-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-sm transition text-center flex items-center justify-center gap-2">
+                    <a href="{{ route('page.contact') }}#kerjasama" class="px-7 py-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-sm transition text-center flex items-center justify-center gap-2">
                         <span>Kerjasama Organizer</span>
                         <span>&rarr;</span>
                     </a>
@@ -388,12 +388,12 @@
             Dapatkan sistem tiketing profesional yang siap pakai, tanpa ribet setup server. Pengaturan kuota lomba, early bird, integrasi Tripay resmi, dan rekap jersey pabrik instan.
         </p>
         <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="{{ route('page.contact') }}" class="px-8 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm shadow-xl shadow-orange-600/30 transition flex items-center gap-2">
+            <a href="{{ route('page.contact') }}#kerjasama" class="px-8 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm shadow-xl shadow-orange-600/30 transition flex items-center gap-2">
                 <span>Hubungi Tim Kemitraan Jelatix</span>
                 <span>&rarr;</span>
             </a>
-            <a href="mailto:hi@jelatix.com" class="px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold text-sm transition">
-                Email: hi@jelatix.com
+            <a href="https://wa.me/6281916444458?text=Halo%20Tim%20Jelatix%2C%20saya%20tertarik%20untuk%20kerjasama%20penyelenggaraan%20event%20lari%20menggunakan%20platform%20Jelatix." target="_blank" rel="noopener" class="px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold text-sm transition inline-flex items-center gap-2">
+                <span>💬</span> WhatsApp Organizer
             </a>
         </div>
     </div>

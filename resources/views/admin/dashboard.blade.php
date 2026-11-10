@@ -177,7 +177,7 @@
                                 @endif
                             </td>
                             <td class="p-4 text-slate-500">
-                                {{ $trx->created_at->format('d/m H:i') }}
+                                {{ $trx->created_at->format('d/m H:i') }} WIB
                             </td>
                             <td class="p-4 text-right space-x-2">
                                 <a href="{{ route('order.show', ['invoice' => $trx->invoice_number]) }}" target="_blank" class="text-blue-600 hover:underline">

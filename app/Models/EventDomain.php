@@ -5,7 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $event_id
+ * @property string $domain
+ * @property bool $is_primary
+ * @property bool $is_active
+ * @property Carbon|null $ssl_verified_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Event $event
+ */
 class EventDomain extends Model
 {
     use HasFactory;
@@ -24,6 +36,9 @@ class EventDomain extends Model
         'ssl_verified_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Event, $this>
+     */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);

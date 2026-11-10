@@ -2,11 +2,43 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $event_id
+ * @property string $invoice_number
+ * @property string|null $tripay_reference
+ * @property string|null $tripay_merchant_ref
+ * @property string $buyer_name
+ * @property string $buyer_email
+ * @property string $buyer_phone
+ * @property float $subtotal
+ * @property float $fee_amount
+ * @property float $grand_total
+ * @property string|null $payment_method
+ * @property string|null $payment_channel_code
+ * @property string|null $tripay_checkout_url
+ * @property string|null $tripay_pay_code
+ * @property string|null $tripay_qr_url
+ * @property string $status
+ * @property Carbon|null $paid_at
+ * @property Carbon|null $expires_at
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Event $event
+ * @property-read Collection<int, TransactionItem> $items
+ * @property-read Collection<int, Participant> $participants
+ * @property-read Collection<int, PaymentLog> $paymentLogs
+ * @property-read Collection<int, EmailLog> $emailLogs
+ */
 class Transaction extends Model
 {
     use HasFactory;
@@ -42,26 +74,41 @@ class Transaction extends Model
         'expires_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Event, $this>
+     */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /**
+     * @return HasMany<TransactionItem, $this>
+     */
     public function items(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
     }
 
+    /**
+     * @return HasMany<Participant, $this>
+     */
     public function participants(): HasMany
     {
         return $this->hasMany(Participant::class);
     }
 
+    /**
+     * @return HasMany<PaymentLog, $this>
+     */
     public function paymentLogs(): HasMany
     {
         return $this->hasMany(PaymentLog::class);
     }
 
+    /**
+     * @return HasMany<EmailLog, $this>
+     */
     public function emailLogs(): HasMany
     {
         return $this->hasMany(EmailLog::class);

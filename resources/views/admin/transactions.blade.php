@@ -66,7 +66,7 @@
                         <tr class="hover:bg-slate-50/80 transition">
                             <td class="p-4">
                                 <div class="font-mono font-bold text-slate-900">{{ $trx->invoice_number }}</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">{{ $trx->created_at->format('d M Y H:i') }}</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">{{ $trx->created_at->format('d M Y H:i') }} WIB</div>
                             </td>
                             <td class="p-4 font-semibold text-slate-700">
                                 {{ $trx->event->title ?? '-' }}

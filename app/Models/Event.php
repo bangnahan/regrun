@@ -2,11 +2,50 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property Carbon|null $race_date
+ * @property string|null $start_time
+ * @property string|null $location_name
+ * @property string|null $location_address
+ * @property string|null $location_map_url
+ * @property string|null $contact_email
+ * @property string|null $contact_phone
+ * @property string|null $contact_instagram
+ * @property string|null $banner_image
+ * @property string|null $logo_image
+ * @property string|null $primary_color
+ * @property string|null $custom_domain
+ * @property string|null $rpc_location
+ * @property Carbon|null $rpc_start_date
+ * @property Carbon|null $rpc_end_date
+ * @property string|null $rpc_notes
+ * @property bool $auto_generate_bib
+ * @property bool $is_active
+ * @property bool $is_default
+ * @property string|null $tripay_merchant_code
+ * @property string|null $tripay_api_key
+ * @property string|null $tripay_private_key
+ * @property string|null $mailketing_api_token
+ * @property string|null $mailketing_sender_email
+ * @property string|null $mailketing_sender_name
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, TicketCategory> $ticketCategories
+ * @property-read Collection<int, Transaction> $transactions
+ * @property-read Collection<int, Participant> $participants
+ * @property-read Collection<int, EventDomain> $domains
+ */
 class Event extends Model
 {
     use HasFactory;
@@ -49,21 +88,33 @@ class Event extends Model
         'is_default' => 'boolean',
     ];
 
+    /**
+     * @return HasMany<TicketCategory, $this>
+     */
     public function ticketCategories(): HasMany
     {
         return $this->hasMany(TicketCategory::class)->orderBy('sort_order');
     }
 
+    /**
+     * @return HasMany<Transaction, $this>
+     */
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
     }
 
+    /**
+     * @return HasManyThrough<Participant, Transaction, $this>
+     */
     public function participants(): HasManyThrough
     {
         return $this->hasManyThrough(Participant::class, Transaction::class);
     }
 
+    /**
+     * @return HasMany<EventDomain, $this>
+     */
     public function domains(): HasMany
     {
         return $this->hasMany(EventDomain::class)->orderByDesc('is_primary');
@@ -84,6 +135,7 @@ class Event extends Model
         }
 
         $first = $this->domains()->where('is_active', true)->first();
+
         return $first?->domain;
     }
 
@@ -117,7 +169,7 @@ class Event extends Model
             // B. Also check without/with leading 'www.'
             $altDomain = str_starts_with($cleanDomain, 'www.')
                 ? substr($cleanDomain, 4)
-                : 'www.' . $cleanDomain;
+                : 'www.'.$cleanDomain;
 
             $domainRecordAlt = EventDomain::where('domain', $altDomain)
                 ->where('is_active', true)
@@ -153,7 +205,7 @@ class Event extends Model
         $isSandbox = ($mode === 'sandbox');
 
         // Check if event has custom credentials
-        if (!empty($this->tripay_merchant_code) && !empty($this->tripay_api_key)) {
+        if (! empty($this->tripay_merchant_code) && ! empty($this->tripay_api_key)) {
             return [
                 'merchant_code' => $this->tripay_merchant_code,
                 'api_key' => $this->tripay_api_key,
@@ -188,11 +240,11 @@ class Event extends Model
      */
     public function getMailketingCredentials(): array
     {
-        if (!empty($this->mailketing_api_token)) {
+        if (! empty($this->mailketing_api_token)) {
             return [
                 'api_token' => $this->mailketing_api_token,
                 'sender_email' => $this->mailketing_sender_email ?: SystemSetting::get('mailketing_sender_email', config('services.mailketing.sender_email', 'hi@jelatix.com')),
-                'sender_name' => $this->mailketing_sender_name ?: ($this->title . ' Organizing Team'),
+                'sender_name' => $this->mailketing_sender_name ?: ($this->title.' Organizing Team'),
                 'is_custom' => true,
             ];
         }

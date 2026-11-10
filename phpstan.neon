@@ -5,5 +5,5 @@ parameters:
     paths:
         - app/
 
-    # Level 1 provides clean analysis for Eloquent models and catches bugs, undefined variables, and bad calls.
-    level: 1
+    # Level 3 provides strict analysis for Eloquent models, relations, types, and bad calls.
+    level: 3

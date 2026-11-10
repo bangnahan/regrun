@@ -2,11 +2,33 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $event_id
+ * @property string $name
+ * @property string $code
+ * @property string|null $description
+ * @property float $price
+ * @property float|null $early_bird_price
+ * @property Carbon|null $early_bird_end_date
+ * @property int $quota
+ * @property int $sold_count
+ * @property int $reserved_count
+ * @property int $min_age
+ * @property bool $is_active
+ * @property int $sort_order
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Event $event
+ * @property-read Collection<int, Participant> $participants
+ */
 class TicketCategory extends Model
 {
     use HasFactory;
@@ -39,11 +61,17 @@ class TicketCategory extends Model
         'sort_order' => 'integer',
     ];
 
+    /**
+     * @return BelongsTo<Event, $this>
+     */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /**
+     * @return HasMany<Participant, $this>
+     */
     public function participants(): HasMany
     {
         return $this->hasMany(Participant::class);
@@ -59,8 +87,8 @@ class TicketCategory extends Model
      */
     public function getIsEarlyBirdActiveAttribute(): bool
     {
-        return !is_null($this->early_bird_price)
-            && !is_null($this->early_bird_end_date)
+        return ! is_null($this->early_bird_price)
+            && ! is_null($this->early_bird_end_date)
             && now()->lte($this->early_bird_end_date);
     }
 
