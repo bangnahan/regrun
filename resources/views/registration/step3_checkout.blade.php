@@ -40,6 +40,17 @@
     },
     formatRupiah(num) {
         return 'Rp ' + Number(num).toLocaleString('id-ID');
+    },
+    trackInitiateCheckout() {
+        if (typeof fbq === 'function') {
+            fbq('track', 'InitiateCheckout', {
+                content_name: '{{ addslashes($event->title) }}',
+                content_type: 'product',
+                value: this.subtotal,
+                currency: 'IDR',
+                num_items: {{ count($selectedTickets) }}
+            });
+        }
     }
 }" x-init="
     const sel = document.getElementById('payment_method_select');
@@ -85,8 +96,10 @@
         </div>
     @endif
 
-    <form action="{{ route('register.process_payment') }}" method="POST">
+    <form action="{{ route('register.process_payment') }}" method="POST" @submit="trackInitiateCheckout()">
         @csrf
+        <input type="hidden" name="meta_fbp" id="meta_fbp" value="">
+        <input type="hidden" name="meta_fbc" id="meta_fbc" value="">
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <!-- Left Column: Form Pembeli & Pilihan Tripay Dropdown -->
@@ -319,3 +332,32 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function getCookie(name) {
+        let value = '; ' + document.cookie;
+        let parts = value.split('; ' + name + '=');
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    let fbp = getCookie('_fbp');
+    let fbc = getCookie('_fbc');
+
+    if (!fbc) {
+        let urlParams = new URLSearchParams(window.location.search);
+        let fbclid = urlParams.get('fbclid');
+        if (fbclid) {
+            fbc = 'fb.1.' + (+new Date()) + '.' + fbclid;
+        }
+    }
+
+    let fbpInput = document.getElementById('meta_fbp');
+    let fbcInput = document.getElementById('meta_fbc');
+    if (fbpInput && fbp) fbpInput.value = fbp;
+    if (fbcInput && fbc) fbcInput.value = fbc;
+});
+</script>
+@endpush

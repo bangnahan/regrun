@@ -221,3 +221,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+@if($transaction->status === 'PAID' && $transaction->event?->hasMetaPixel())
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof fbq === 'function') {
+        fbq('track', 'Purchase', {
+            content_name: '{{ addslashes($transaction->event->title) }}',
+            content_type: 'product',
+            value: {{ (float) $transaction->subtotal }},
+            currency: 'IDR',
+            num_items: {{ (int) $transaction->items->sum('quantity') }}
+        }, { eventID: '{{ $transaction->invoice_number }}' });
+    }
+});
+</script>
+@endif
+@endpush

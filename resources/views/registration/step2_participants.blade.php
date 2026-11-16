@@ -312,6 +312,16 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    @if($event->hasMetaPixel())
+    if (typeof fbq === 'function') {
+        fbq('track', 'AddPaymentInfo', {
+            content_name: '{{ addslashes($event->title) }}',
+            content_category: 'Ticket Registration Form',
+            num_items: {{ (int) $totalQuantity }}
+        });
+    }
+    @endif
+
     const form = document.querySelector('form');
     if (!form) return;
 

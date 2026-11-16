@@ -365,6 +365,8 @@ class RegistrationController extends Controller
                 'expires_at' => now()->addMinutes(60),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
+                'meta_fbp' => $request->input('meta_fbp') ?: $request->cookie('_fbp'),
+                'meta_fbc' => $request->input('meta_fbc') ?: $request->cookie('_fbc'),
             ]);
 
             // 3. Create Transaction Items

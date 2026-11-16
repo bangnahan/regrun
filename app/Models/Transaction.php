@@ -31,6 +31,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $expires_at
  * @property string|null $ip_address
  * @property string|null $user_agent
+ * @property string|null $meta_fbp
+ * @property string|null $meta_fbc
+ * @property Carbon|null $capi_purchase_sent_at
+ * @property string|null $capi_purchase_response
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Event $event
@@ -64,6 +68,10 @@ class Transaction extends Model
         'expires_at',
         'ip_address',
         'user_agent',
+        'meta_fbp',
+        'meta_fbc',
+        'capi_purchase_sent_at',
+        'capi_purchase_response',
     ];
 
     protected $casts = [
@@ -72,6 +80,7 @@ class Transaction extends Model
         'grand_total' => 'decimal:2',
         'paid_at' => 'datetime',
         'expires_at' => 'datetime',
+        'capi_purchase_sent_at' => 'datetime',
     ];
 
     /**

@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventDomain;
 use App\Models\Transaction;
 use App\Services\MailketingService;
+use App\Services\MetaCapiService;
 use App\Services\TripayService;
 use Illuminate\Http\Request;
 
@@ -15,10 +16,13 @@ class OrderController extends Controller
 
     protected MailketingService $mailketingService;
 
-    public function __construct(TripayService $tripayService, MailketingService $mailketingService)
+    protected MetaCapiService $metaCapiService;
+
+    public function __construct(TripayService $tripayService, MailketingService $mailketingService, MetaCapiService $metaCapiService)
     {
         $this->tripayService = $tripayService;
         $this->mailketingService = $mailketingService;
+        $this->metaCapiService = $metaCapiService;
     }
 
     /**
@@ -105,6 +109,12 @@ class OrderController extends Controller
         $this->mailketingService->sendInvoiceEmail($transaction);
         foreach ($transaction->participants as $participant) {
             $this->mailketingService->sendTicketEmail($participant);
+        }
+
+        try {
+            $this->metaCapiService->sendPurchaseEvent($transaction);
+        } catch (\Throwable $e) {
+            // Ignore exception to not block simulation
         }
 
         return redirect()->route('order.show', ['invoice' => $transaction->invoice_number])

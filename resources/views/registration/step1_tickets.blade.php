@@ -36,6 +36,17 @@
     },
     formatRupiah(num) {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+    },
+    trackAddToCart() {
+        if (typeof fbq === 'function' && this.totalTickets > 0) {
+            fbq('track', 'AddToCart', {
+                content_name: '{{ addslashes($event->title) }}',
+                content_type: 'product',
+                value: this.totalPrice,
+                currency: 'IDR',
+                num_items: this.totalTickets
+            });
+        }
     }
 }">
     <!-- Event Banner & Header -->
@@ -90,7 +101,7 @@
     </div>
 
     <!-- Form Submission to Step 2 -->
-    <form action="{{ route('register.step_participants') }}" method="POST">
+    <form action="{{ route('register.step_participants') }}" method="POST" @submit="trackAddToCart()">
         @csrf
         <input type="hidden" name="event_id" value="{{ $event->id }}">
 
@@ -191,3 +202,21 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+@if($event->hasMetaPixel())
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof fbq === 'function') {
+        fbq('track', 'ViewContent', {
+            content_name: '{{ addslashes($event->title) }}',
+            content_type: 'product',
+            content_category: 'Ticket',
+            currency: 'IDR',
+            value: {{ (float) ($categories->min('current_price') ?? 0) }}
+        });
+    }
+});
+</script>
+@endif
+@endpush

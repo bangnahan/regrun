@@ -43,6 +43,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $mailketing_api_token
  * @property string|null $mailketing_sender_email
  * @property string|null $mailketing_sender_name
+ * @property string|null $meta_pixel_id
+ * @property string|null $meta_capi_token
+ * @property string|null $meta_capi_test_code
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, TicketCategory> $ticketCategories
@@ -85,6 +88,9 @@ class Event extends Model
         'mailketing_api_token',
         'mailketing_sender_email',
         'mailketing_sender_name',
+        'meta_pixel_id',
+        'meta_capi_token',
+        'meta_capi_test_code',
     ];
 
     protected $casts = [
@@ -285,5 +291,21 @@ class Event extends Model
         }
 
         return asset($image);
+    }
+
+    /**
+     * Determine if this event has Meta Pixel configured.
+     */
+    public function hasMetaPixel(): bool
+    {
+        return ! empty($this->meta_pixel_id);
+    }
+
+    /**
+     * Determine if this event has Meta Conversions API (CAPI) configured.
+     */
+    public function hasMetaCapi(): bool
+    {
+        return ! empty($this->meta_pixel_id) && ! empty($this->meta_capi_token);
     }
 }

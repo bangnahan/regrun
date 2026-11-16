@@ -389,6 +389,50 @@
                             </div>
                         </div>
 
+                        <!-- Meta Pixel & Conversions API (CAPI) Accordion -->
+                        <div class="sm:col-span-4 p-4 rounded-xl bg-slate-50/80 border border-slate-200" x-data="{ openMeta: {{ ($ev->meta_pixel_id || $ev->meta_capi_token) ? 'true' : 'false' }} }">
+                            <div class="flex items-center justify-between cursor-pointer" @click="openMeta = !openMeta">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">🎯</span>
+                                    <div>
+                                        <span class="font-extrabold text-xs text-slate-800">Meta Pixel &amp; Conversions API / CAPI (Facebook &amp; Instagram Ads)</span>
+                                        <p class="text-[11px] text-slate-500">Tracking akurat multi-tahap (ViewContent, AddToCart, AddPaymentInfo, InitiateCheckout, dan Purchase via CAPI saat lunas).</p>
+                                    </div>
+                                </div>
+                                <button type="button" class="text-xs font-bold text-orange-600 hover:text-orange-700">
+                                    <span x-text="openMeta ? 'Tutup ▲' : 'Buka Pengaturan Meta CAPI ▼'"></span>
+                                </button>
+                            </div>
+
+                            <div x-show="openMeta" x-collapse class="mt-4 pt-3 border-t border-slate-200 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                            Meta Pixel ID
+                                        </label>
+                                        <input type="text" name="meta_pixel_id" value="{{ $ev->meta_pixel_id }}" placeholder="Contoh: 123456789012345" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">
+                                        <p class="text-[10px] text-slate-400 mt-1">Dapat ditemukan di Events Manager &gt; Pengaturan &gt; ID Pixel.</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                            Kode Uji Coba CAPI (Test Event Code)
+                                        </label>
+                                        <input type="text" name="meta_capi_test_code" value="{{ $ev->meta_capi_test_code }}" placeholder="Opsional (misal: TEST12345)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">
+                                        <p class="text-[10px] text-slate-400 mt-1">Gunakan saat testing di Events Manager &gt; Uji Peristiwa.</p>
+                                    </div>
+
+                                    <div class="sm:col-span-2">
+                                        <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                            Conversions API Access Token
+                                        </label>
+                                        <textarea name="meta_capi_token" rows="2" placeholder="Token Akses Meta Graph API (EAAG...)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">{{ $ev->meta_capi_token }}</textarea>
+                                        <p class="text-[10px] text-slate-400 mt-1">Generate di Events Manager &gt; Pengaturan &gt; Konversi API &gt; Hasilkan Token Akses.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="sm:col-span-4 flex items-center gap-6 pt-2">
                             <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
                                 <input type="checkbox" name="is_active" value="1" {{ $ev->is_active ? 'checked' : '' }} class="w-4 h-4 rounded text-orange-600 border-slate-300 focus:ring-orange-500">
@@ -761,6 +805,39 @@
                                 <img :src="createHeroPreview" alt="Preview Hero" class="max-h-36 rounded-lg object-cover w-full">
                             </div>
                         </template>
+                    </div>
+
+                    <!-- Meta Pixel & Conversions API (CAPI) Accordion -->
+                    <div class="sm:col-span-2 p-3.5 rounded-xl bg-slate-50 border border-slate-200" x-data="{ openCreateMeta: false }">
+                        <div class="flex items-center justify-between cursor-pointer" @click="openCreateMeta = !openCreateMeta">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">🎯</span>
+                                <div>
+                                    <span class="font-bold text-xs text-slate-800">Meta Pixel &amp; Conversions API / CAPI (Opsional)</span>
+                                    <p class="text-[10px] text-slate-500">Tracking Facebook/Instagram Ads khusus event ini.</p>
+                                </div>
+                            </div>
+                            <button type="button" class="text-xs font-bold text-orange-600 hover:text-orange-700">
+                                <span x-text="openCreateMeta ? 'Tutup ▲' : 'Buka Pengaturan Meta ▼'"></span>
+                            </button>
+                        </div>
+
+                        <div x-show="openCreateMeta" x-collapse class="mt-3 pt-3 border-t border-slate-200 space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Meta Pixel ID</label>
+                                    <input type="text" name="meta_pixel_id" placeholder="Contoh: 123456789012345" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Kode Uji Coba CAPI (Test Code)</label>
+                                    <input type="text" name="meta_capi_test_code" placeholder="Opsional (misal: TEST12345)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Conversions API Access Token</label>
+                                    <textarea name="meta_capi_token" rows="2" placeholder="Token Akses Meta Graph API (EAAG...)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs"></textarea>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="sm:col-span-2 space-y-2 pt-1">

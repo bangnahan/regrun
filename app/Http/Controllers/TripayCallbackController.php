@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PaymentLog;
 use App\Models\Transaction;
 use App\Services\MailketingService;
+use App\Services\MetaCapiService;
 use App\Services\TripayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,10 +17,13 @@ class TripayCallbackController extends Controller
 
     protected MailketingService $mailketingService;
 
-    public function __construct(TripayService $tripayService, MailketingService $mailketingService)
+    protected MetaCapiService $metaCapiService;
+
+    public function __construct(TripayService $tripayService, MailketingService $mailketingService, MetaCapiService $metaCapiService)
     {
         $this->tripayService = $tripayService;
         $this->mailketingService = $mailketingService;
+        $this->metaCapiService = $metaCapiService;
     }
 
     /**
@@ -100,6 +104,13 @@ class TripayCallbackController extends Controller
                     }
                 } catch (\Throwable $e) {
                     Log::error('Mailketing webhook trigger error: '.$e->getMessage());
+                }
+
+                // Dispatch Meta CAPI Purchase event
+                try {
+                    $this->metaCapiService->sendPurchaseEvent($transaction);
+                } catch (\Throwable $e) {
+                    Log::error('Meta CAPI purchase webhook trigger error: '.$e->getMessage());
                 }
             }
         } elseif (in_array($status, ['EXPIRED', 'FAILED'])) {

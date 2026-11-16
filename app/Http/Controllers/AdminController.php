@@ -10,6 +10,7 @@ use App\Models\SystemSetting;
 use App\Models\TicketCategory;
 use App\Models\Transaction;
 use App\Services\MailketingService;
+use App\Services\MetaCapiService;
 use App\Services\TripayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,10 +23,13 @@ class AdminController extends Controller
 
     protected TripayService $tripayService;
 
-    public function __construct(MailketingService $mailketingService, TripayService $tripayService)
+    protected MetaCapiService $metaCapiService;
+
+    public function __construct(MailketingService $mailketingService, TripayService $tripayService, MetaCapiService $metaCapiService)
     {
         $this->mailketingService = $mailketingService;
         $this->tripayService = $tripayService;
+        $this->metaCapiService = $metaCapiService;
     }
 
     /**
@@ -270,6 +274,12 @@ class AdminController extends Controller
             $this->mailketingService->sendInvoiceEmail($transaction);
             foreach ($transaction->participants as $p) {
                 $this->mailketingService->sendTicketEmail($p);
+            }
+
+            try {
+                $this->metaCapiService->sendPurchaseEvent($transaction);
+            } catch (\Throwable $e) {
+                // Ignore exception to not block manual status update
             }
         }
 
@@ -518,6 +528,9 @@ class AdminController extends Controller
             'tripay_api_key' => 'nullable|string',
             'tripay_private_key' => 'nullable|string',
             'mailketing_api_token' => 'nullable|string',
+            'meta_pixel_id' => 'nullable|string|max:50',
+            'meta_capi_token' => 'nullable|string',
+            'meta_capi_test_code' => 'nullable|string|max:50',
             'hero_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
         ]);
 
@@ -561,6 +574,9 @@ class AdminController extends Controller
             'mailketing_api_token' => $request->mailketing_api_token,
             'mailketing_sender_email' => $request->mailketing_sender_email,
             'mailketing_sender_name' => $request->mailketing_sender_name,
+            'meta_pixel_id' => $request->meta_pixel_id ? trim($request->meta_pixel_id) : null,
+            'meta_capi_token' => $request->meta_capi_token ? trim($request->meta_capi_token) : null,
+            'meta_capi_test_code' => $request->meta_capi_test_code ? trim($request->meta_capi_test_code) : null,
             'auto_generate_bib' => $request->boolean('auto_generate_bib', true),
             'allow_jersey_options' => $request->boolean('allow_jersey_options', true),
             'allow_singlet' => $request->boolean('allow_singlet', true),
@@ -639,6 +655,9 @@ class AdminController extends Controller
             'tripay_api_key' => 'nullable|string',
             'tripay_private_key' => 'nullable|string',
             'mailketing_api_token' => 'nullable|string',
+            'meta_pixel_id' => 'nullable|string|max:50',
+            'meta_capi_token' => 'nullable|string',
+            'meta_capi_test_code' => 'nullable|string|max:50',
             'hero_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
         ]);
 
@@ -694,6 +713,9 @@ class AdminController extends Controller
             'mailketing_api_token' => $request->mailketing_api_token,
             'mailketing_sender_email' => $request->mailketing_sender_email,
             'mailketing_sender_name' => $request->mailketing_sender_name,
+            'meta_pixel_id' => $request->meta_pixel_id ? trim($request->meta_pixel_id) : null,
+            'meta_capi_token' => $request->meta_capi_token ? trim($request->meta_capi_token) : null,
+            'meta_capi_test_code' => $request->meta_capi_test_code ? trim($request->meta_capi_test_code) : null,
             'auto_generate_bib' => $request->boolean('auto_generate_bib'),
             'allow_jersey_options' => $request->boolean('allow_jersey_options', true),
             'allow_singlet' => $request->boolean('allow_singlet', true),
