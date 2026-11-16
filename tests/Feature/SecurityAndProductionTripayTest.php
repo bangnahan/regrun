@@ -9,8 +9,8 @@ use App\Models\TicketCategory;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\TripayService;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SecurityAndProductionTripayTest extends TestCase
@@ -85,7 +85,7 @@ class SecurityAndProductionTripayTest extends TestCase
             'expires_at' => now()->addHour(),
         ]);
 
-        $response = $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class)
+        $response = $this->withoutMiddleware(PreventRequestForgery::class)
             ->post(route('order.simulate_pay', ['invoice' => $transaction->invoice_number]));
 
         $response->assertStatus(403);
@@ -143,7 +143,7 @@ class SecurityAndProductionTripayTest extends TestCase
 
         // Test 1: Sandbox Mode
         SystemSetting::set('tripay_mode', 'sandbox', 'tripay');
-        $sandboxService = new TripayService();
+        $sandboxService = new TripayService;
 
         $this->assertTrue($sandboxService->isSandbox());
         $this->assertEquals('sandbox', $sandboxService->getMode());
@@ -154,7 +154,7 @@ class SecurityAndProductionTripayTest extends TestCase
 
         // Test 2: Production Mode
         SystemSetting::set('tripay_mode', 'production', 'tripay');
-        $productionService = new TripayService();
+        $productionService = new TripayService;
 
         $this->assertFalse($productionService->isSandbox());
         $this->assertEquals('production', $productionService->getMode());
@@ -171,7 +171,7 @@ class SecurityAndProductionTripayTest extends TestCase
     {
         // In Sandbox: default channels provide QRIS2
         SystemSetting::set('tripay_mode', 'sandbox', 'tripay');
-        $sandboxService = new TripayService();
+        $sandboxService = new TripayService;
         $sandboxChannels = $sandboxService->getDefaultChannels();
         $sandboxQris = collect($sandboxChannels)->firstWhere('group', 'E-Wallet');
         $this->assertEquals('QRIS2', $sandboxQris['code']);
@@ -179,7 +179,7 @@ class SecurityAndProductionTripayTest extends TestCase
 
         // In Production: default channels provide QRIS
         SystemSetting::set('tripay_mode', 'production', 'tripay');
-        $prodService = new TripayService();
+        $prodService = new TripayService;
         $prodChannels = $prodService->getDefaultChannels();
         $prodQris = collect($prodChannels)->firstWhere('group', 'E-Wallet');
         $this->assertEquals('QRIS', $prodQris['code']);

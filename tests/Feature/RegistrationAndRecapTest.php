@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Event;
 use App\Models\JerseySize;
-use App\Models\Participant;
 use App\Models\TicketCategory;
 use App\Models\Transaction;
 use App\Models\User;

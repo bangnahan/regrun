@@ -19,7 +19,7 @@ class PageController extends Controller
 
         // Check if the current domain is a dedicated event domain (not the main platform domain)
         $isDedicatedDomain = false;
-        if (!in_array($cleanDomain, ['jelatix.com', 'www.jelatix.com', '127.0.0.1', 'localhost', 'regrun.test', 'portal.regrun.test'])) {
+        if (! in_array($cleanDomain, ['jelatix.com', 'www.jelatix.com', '127.0.0.1', 'localhost', 'regrun.test', 'portal.regrun.test'])) {
             $matchedEvent = Event::getActiveEvent(null, $cleanDomain);
             if ($matchedEvent && $matchedEvent->is_active) {
                 $isDedicatedDomain = true;
@@ -32,7 +32,7 @@ class PageController extends Controller
 
         // Load all active running events with active categories
         $events = Event::where('is_active', true)
-            ->with(['ticketCategories' => fn($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->with(['ticketCategories' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
             ->orderByDesc('is_default')
             ->orderBy('race_date')
             ->get();

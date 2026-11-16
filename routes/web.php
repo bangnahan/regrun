@@ -56,7 +56,7 @@ Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.log
 
 // Admin Panel Protected Routes
 Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
-    Route::get('/', fn() => redirect()->route('admin.dashboard'));
+    Route::get('/', fn () => redirect()->route('admin.dashboard'));
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     // Modul Rekap Jersey Pabrik (Pivot Matrix & Export)

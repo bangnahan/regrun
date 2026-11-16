@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
+use App\Models\EventDomain;
 use App\Models\Transaction;
 use App\Services\MailketingService;
 use App\Services\TripayService;
@@ -10,6 +12,7 @@ use Illuminate\Http\Request;
 class OrderController extends Controller
 {
     protected TripayService $tripayService;
+
     protected MailketingService $mailketingService;
 
     public function __construct(TripayService $tripayService, MailketingService $mailketingService)
@@ -30,16 +33,16 @@ class OrderController extends Controller
         // Multi-domain tenant isolation: Dedicated domain cannot access another event's transaction
         $currentEvent = $request->attributes->get('currentEvent') ?? (app()->bound('currentEvent') ? app('currentEvent') : null);
         if ($currentEvent && (int) $transaction->event_id !== (int) $currentEvent->id) {
-            $cleanHost = \App\Models\EventDomain::normalizeDomain($request->getHost());
-            $isDedicatedDomain = \App\Models\EventDomain::where('domain', $cleanHost)->exists()
-                || \App\Models\Event::where('custom_domain', $cleanHost)->exists();
+            $cleanHost = EventDomain::normalizeDomain($request->getHost());
+            $isDedicatedDomain = EventDomain::where('domain', $cleanHost)->exists()
+                || Event::where('custom_domain', $cleanHost)->exists();
 
             if ($isDedicatedDomain) {
                 abort(404, 'Pesanan tidak ditemukan pada portal event ini.');
             }
         }
 
-        $isSandbox = $this->tripayService->isSandbox() && !app()->environment('production');
+        $isSandbox = $this->tripayService->isSandbox() && ! app()->environment('production');
 
         return view('order.show', compact('transaction', 'isSandbox'));
     }
@@ -50,7 +53,7 @@ class OrderController extends Controller
     public function simulatePay(Request $request, string $invoice)
     {
         // CRITICAL SECURITY ENFORCEMENT: Never permit simulated payment in production mode or production environment!
-        if (!$this->tripayService->isSandbox() || app()->environment('production')) {
+        if (! $this->tripayService->isSandbox() || app()->environment('production')) {
             abort(403, 'Aksi simulasi pembayaran dinonaktifkan di mode Produksi demi keamanan transaksi.');
         }
 
@@ -59,9 +62,9 @@ class OrderController extends Controller
         // Multi-domain tenant isolation: Dedicated domain cannot simulate/pay another event's transaction
         $currentEvent = $request->attributes->get('currentEvent') ?? (app()->bound('currentEvent') ? app('currentEvent') : null);
         if ($currentEvent && (int) $transaction->event_id !== (int) $currentEvent->id) {
-            $cleanHost = \App\Models\EventDomain::normalizeDomain($request->getHost());
-            $isDedicatedDomain = \App\Models\EventDomain::where('domain', $cleanHost)->exists()
-                || \App\Models\Event::where('custom_domain', $cleanHost)->exists();
+            $cleanHost = EventDomain::normalizeDomain($request->getHost());
+            $isDedicatedDomain = EventDomain::where('domain', $cleanHost)->exists()
+                || Event::where('custom_domain', $cleanHost)->exists();
 
             if ($isDedicatedDomain) {
                 abort(404, 'Pesanan tidak ditemukan pada portal event ini.');
@@ -89,10 +92,10 @@ class OrderController extends Controller
         $shouldAutoGenerate = $transaction->event?->auto_generate_bib ?? true;
         if ($shouldAutoGenerate) {
             foreach ($transaction->participants as $idx => $p) {
-                if (!$p->bib_number) {
+                if (! $p->bib_number) {
                     $codePrefix = substr($p->ticketCategory->code, 0, 2);
                     $p->update([
-                        'bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
+                        'bib_number' => $codePrefix.str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
                     ]);
                 }
             }

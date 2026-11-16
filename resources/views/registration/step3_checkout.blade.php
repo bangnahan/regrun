@@ -283,8 +283,17 @@
                 <div class="mt-4 pt-4 border-t border-slate-200 space-y-2.5 text-xs">
                     <div class="flex items-center justify-between text-slate-600">
                         <span>Subtotal Tiket</span>
-                        <span class="font-semibold text-slate-900">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                        <span class="font-semibold text-slate-900">Rp {{ number_format($ticketsSubtotal ?? $subtotal, 0, ',', '.') }}</span>
                     </div>
+                    @if(!empty($jerseySurchargeTotal) && $jerseySurchargeTotal > 0)
+                        <div class="flex items-center justify-between text-amber-700 font-semibold bg-amber-50 p-2 rounded-lg border border-amber-200">
+                            <span class="flex items-center gap-1.5">
+                                <span>👔</span>
+                                <span>Tambahan Lengan Panjang</span>
+                            </span>
+                            <span>+Rp {{ number_format($jerseySurchargeTotal, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
                     <div class="flex items-center justify-between text-slate-600">
                         <span>Biaya Layanan Gateway (Tripay)</span>
                         <span class="font-semibold text-orange-600" x-text="formatRupiah(selectedFee)"></span>

@@ -249,6 +249,30 @@
                             <p class="text-[11px] text-slate-400 mt-1">Jika memilih <strong>Tunda</strong>, nomor BIB pada e-ticket/invoice akan bertuliskan "Menyusul" sampai panitia mengalokasikan nomor BIB massal di menu Data Peserta.</p>
                         </div>
 
+                        <!-- Jersey Options Setting -->
+                        <div class="sm:col-span-4 bg-orange-50/50 p-4 rounded-xl border border-orange-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-xs">Pilihan Model Jersey Peserta</h4>
+                                    <p class="text-[11px] text-slate-500">Konfigurasi varian lengan jersey dan biaya tambahan.</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
+                                    <input type="checkbox" name="allow_singlet" value="1" {{ $ev->allow_singlet ? 'checked' : '' }} class="rounded text-orange-600">
+                                    <span class="font-bold text-slate-700">🎽 Izinkan Singlet</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
+                                    <input type="checkbox" name="allow_long_sleeve" value="1" {{ $ev->allow_long_sleeve ? 'checked' : '' }} class="rounded text-orange-600">
+                                    <span class="font-bold text-slate-700">👔 Izinkan Lengan Panjang</span>
+                                </label>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1 text-[11px]">Tambahan Biaya Lengan Panjang (Rp)</label>
+                                    <input type="number" name="long_sleeve_price" value="{{ (int)($ev->long_sleeve_price ?? 20000) }}" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Branding & Appearance -->
                         <div class="sm:col-span-2">
                             <label class="block font-bold text-slate-700 mb-1">Logo Event URL</label>
@@ -696,6 +720,28 @@
                             <option value="1" selected>⚡ Otomatis: Generate nomor BIB langsung saat transaksi lunas (Rekomendasi)</option>
                             <option value="0">⏳ Tunda: Tidak perlu generate BIB dahulu (Dialokasikan nanti / saat RPC)</option>
                         </select>
+                    </div>
+
+                    <!-- Jersey Options Setting -->
+                    <div class="sm:col-span-2 bg-orange-50/50 p-4 rounded-xl border border-orange-200 space-y-3">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs">Pilihan Model Jersey Peserta</h4>
+                            <p class="text-[11px] text-slate-500">Konfigurasi varian lengan jersey dan biaya tambahan.</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                            <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
+                                <input type="checkbox" name="allow_singlet" value="1" checked class="rounded text-orange-600">
+                                <span class="font-bold text-slate-700">🎽 Izinkan Singlet</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
+                                <input type="checkbox" name="allow_long_sleeve" value="1" checked class="rounded text-orange-600">
+                                <span class="font-bold text-slate-700">👔 Izinkan Lengan Panjang</span>
+                            </label>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1 text-[11px]">Biaya Lengan Panjang (Rp)</label>
+                                <input type="number" name="long_sleeve_price" value="20000" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Hero Image Upload -->

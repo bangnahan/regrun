@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 class TripayCallbackController extends Controller
 {
     protected TripayService $tripayService;
+
     protected MailketingService $mailketingService;
 
     public function __construct(TripayService $tripayService, MailketingService $mailketingService)
@@ -40,13 +41,14 @@ class TripayCallbackController extends Controller
         ]);
 
         // 1. Verify HMAC Signature
-        if (!$this->tripayService->validateCallback($rawPayload, $signature)) {
-            Log::warning('Tripay Webhook invalid signature from IP: ' . $request->ip());
+        if (! $this->tripayService->validateCallback($rawPayload, $signature)) {
+            Log::warning('Tripay Webhook invalid signature from IP: '.$request->ip());
+
             return response()->json(['success' => false, 'message' => 'Invalid signature'], 403);
         }
 
         $data = json_decode($rawPayload, true);
-        if (!$data || empty($data['merchant_ref'])) {
+        if (! $data || empty($data['merchant_ref'])) {
             return response()->json(['success' => false, 'message' => 'Invalid payload format'], 400);
         }
 
@@ -55,7 +57,7 @@ class TripayCallbackController extends Controller
             ->orWhere('tripay_merchant_ref', $data['merchant_ref'])
             ->first();
 
-        if (!$transaction) {
+        if (! $transaction) {
             return response()->json(['success' => false, 'message' => 'Transaction not found'], 404);
         }
 
@@ -81,10 +83,10 @@ class TripayCallbackController extends Controller
                 $shouldAutoGenerate = $transaction->event?->auto_generate_bib ?? true;
                 if ($shouldAutoGenerate) {
                     foreach ($transaction->participants as $p) {
-                        if (!$p->bib_number) {
+                        if (! $p->bib_number) {
                             $codePrefix = substr($p->ticketCategory->code, 0, 2);
                             $p->update([
-                                'bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
+                                'bib_number' => $codePrefix.str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
                             ]);
                         }
                     }
@@ -97,7 +99,7 @@ class TripayCallbackController extends Controller
                         $this->mailketingService->sendTicketEmail($participant);
                     }
                 } catch (\Throwable $e) {
-                    Log::error('Mailketing webhook trigger error: ' . $e->getMessage());
+                    Log::error('Mailketing webhook trigger error: '.$e->getMessage());
                 }
             }
         } elseif (in_array($status, ['EXPIRED', 'FAILED'])) {

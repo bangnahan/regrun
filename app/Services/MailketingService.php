@@ -12,9 +12,13 @@ use Illuminate\Support\Facades\Log;
 class MailketingService
 {
     protected string $apiToken;
+
     protected string $senderEmail;
+
     protected string $senderName;
+
     protected string $apiUrl = 'https://api.mailketing.co.id/api/v2/send';
+
     protected string $fallbackApiUrl = 'https://api.mailketing.co.id/api/v1/send';
 
     public function __construct()
@@ -29,8 +33,8 @@ class MailketingService
      */
     public function checkStatus(): array
     {
-        $hasToken = !empty($this->apiToken) && strlen($this->apiToken) >= 10;
-        $hasSender = !empty($this->senderEmail) && filter_var($this->senderEmail, FILTER_VALIDATE_EMAIL);
+        $hasToken = ! empty($this->apiToken) && strlen($this->apiToken) >= 10;
+        $hasSender = ! empty($this->senderEmail) && filter_var($this->senderEmail, FILTER_VALIDATE_EMAIL);
 
         return [
             'connected' => $hasToken && $hasSender,
@@ -68,10 +72,10 @@ class MailketingService
             case 'pending_payment':
                 $typeName = 'Tagihan Menunggu Pembayaran';
                 if ($transaction) {
-                    $subject = "[CONTOH] Tagihan Pendaftaran {$transaction->invoice_number} - " . ($transaction->event->title ?? 'Nusantara Sunset Run 2026');
+                    $subject = "[CONTOH] Tagihan Pendaftaran {$transaction->invoice_number} - ".($transaction->event->title ?? 'Nusantara Sunset Run 2026');
                     $htmlContent = $this->buildPendingPaymentHtml($transaction);
                 } else {
-                    $subject = "[CONTOH] Tagihan Pendaftaran INV-SAMPLE-01 - Nusantara Sunset Run 2026";
+                    $subject = '[CONTOH] Tagihan Pendaftaran INV-SAMPLE-01 - Nusantara Sunset Run 2026';
                     $htmlContent = $this->buildFallbackSampleHtml('Tagihan Menunggu Pembayaran');
                 }
                 break;
@@ -80,10 +84,10 @@ class MailketingService
                 $typeName = 'Official E-Ticket Pelari (QR Code)';
                 $participant = $transaction?->participants?->first() ?? Participant::with(['transaction.event', 'ticketCategory', 'jerseySize'])->latest()->first();
                 if ($participant) {
-                    $subject = "[CONTOH E-Ticket] {$participant->full_name} ({$participant->ticket_code}) - " . ($participant->transaction->event->title ?? 'Nusantara Sunset Run 2026');
+                    $subject = "[CONTOH E-Ticket] {$participant->full_name} ({$participant->ticket_code}) - ".($participant->transaction->event->title ?? 'Nusantara Sunset Run 2026');
                     $htmlContent = $this->buildTicketHtml($participant);
                 } else {
-                    $subject = "[CONTOH E-Ticket] Budi Santoso (TKT-DEMO88) - Nusantara Sunset Run 2026";
+                    $subject = '[CONTOH E-Ticket] Budi Santoso (TKT-DEMO88) - Nusantara Sunset Run 2026';
                     $htmlContent = $this->buildFallbackSampleHtml('Official E-Ticket Pelari');
                 }
                 break;
@@ -92,17 +96,17 @@ class MailketingService
             case 'connection':
                 $typeName = 'Tes Koneksi Sederhana';
                 $subject = 'Tes Koneksi Mailketing API - RegRun';
-                $htmlContent = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Tes Koneksi</title></head><body style="margin:0;padding:24px;background:#f8fafc;font-family:Arial,sans-serif;"><div style="max-width:520px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:16px;background:#ffffff;"><h2 style="color:#0f172a;margin:0 0 10px 0;">Koneksi Mailketing API Aktif</h2><p style="color:#475569;font-size:14px;line-height:1.6;">Halo Admin, sistem registrasi lari RegRun berhasil terhubung dengan akun Mailketing Anda. Pengiriman email transaksional dan E-Ticket dengan QR Code siap berjalan.</p><div style="padding:12px;background:#f1f5f9;border-radius:8px;font-size:12px;color:#64748b;">Sender: <strong>' . htmlspecialchars($this->senderEmail) . '</strong> &bull; API Token: Terverifikasi</div></div></body></html>';
+                $htmlContent = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Tes Koneksi</title></head><body style="margin:0;padding:24px;background:#f8fafc;font-family:Arial,sans-serif;"><div style="max-width:520px;margin:auto;padding:24px;border:1px solid #e2e8f0;border-radius:16px;background:#ffffff;"><h2 style="color:#0f172a;margin:0 0 10px 0;">Koneksi Mailketing API Aktif</h2><p style="color:#475569;font-size:14px;line-height:1.6;">Halo Admin, sistem registrasi lari RegRun berhasil terhubung dengan akun Mailketing Anda. Pengiriman email transaksional dan E-Ticket dengan QR Code siap berjalan.</p><div style="padding:12px;background:#f1f5f9;border-radius:8px;font-size:12px;color:#64748b;">Sender: <strong>'.htmlspecialchars($this->senderEmail).'</strong> &bull; API Token: Terverifikasi</div></div></body></html>';
                 break;
 
             case 'invoice':
             default:
                 $typeName = 'Bukti Pembayaran Lunas (Invoice)';
                 if ($transaction) {
-                    $subject = "[CONTOH] Bukti Pembayaran Lunas {$transaction->invoice_number} - " . ($transaction->event->title ?? 'Nusantara Sunset Run 2026');
+                    $subject = "[CONTOH] Bukti Pembayaran Lunas {$transaction->invoice_number} - ".($transaction->event->title ?? 'Nusantara Sunset Run 2026');
                     $htmlContent = $this->buildInvoiceHtml($transaction);
                 } else {
-                    $subject = "[CONTOH] Bukti Pembayaran Lunas INV-SAMPLE-01 - Nusantara Sunset Run 2026";
+                    $subject = '[CONTOH] Bukti Pembayaran Lunas INV-SAMPLE-01 - Nusantara Sunset Run 2026';
                     $htmlContent = $this->buildFallbackSampleHtml('Bukti Pembayaran Lunas');
                 }
                 break;
@@ -113,7 +117,7 @@ class MailketingService
             'Tester RegRun',
             $subject,
             $htmlContent,
-            'sample_' . $type,
+            'sample_'.$type,
             $transaction?->id,
             null
         );
@@ -215,10 +219,11 @@ class MailketingService
                 'participant_id' => $participantId,
                 'recipient_email' => $recipientEmail,
                 'email_type' => $type,
-                'mailketing_message_id' => 'TEST-MK-' . time(),
+                'mailketing_message_id' => 'TEST-MK-'.time(),
                 'status' => 'sent',
                 'error_message' => null,
             ]);
+
             return true;
         }
 
@@ -239,26 +244,26 @@ class MailketingService
         try {
             // Priority 1: Mailketing API v2 (application/json)
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiToken,
+                'Authorization' => 'Bearer '.$this->apiToken,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->timeout(20)->post($this->apiUrl, $payload);
 
             $resData = $response->json();
 
-            if ($response->successful() && (!empty($resData['success']) || ($resData['status'] ?? '') === 'success' || !empty($resData['data']['message_id']))) {
+            if ($response->successful() && (! empty($resData['success']) || ($resData['status'] ?? '') === 'success' || ! empty($resData['data']['message_id']))) {
                 $status = 'sent';
-                $messageId = $resData['data']['message_id'] ?? ($resData['message_id'] ?? ('MK-' . uniqid()));
+                $messageId = $resData['data']['message_id'] ?? ($resData['message_id'] ?? ('MK-'.uniqid()));
                 Log::info("Mailketing v2 email successfully sent to {$recipientEmail} [{$type}]");
             } else {
                 // Priority 2: Fallback to Mailketing v1 (asForm)
-                Log::warning("Mailketing v2 failed, attempting v1 fallback for {$recipientEmail}: " . ($resData['message'] ?? $response->body()));
+                Log::warning("Mailketing v2 failed, attempting v1 fallback for {$recipientEmail}: ".($resData['message'] ?? $response->body()));
                 $v1Response = Http::asForm()->timeout(20)->post($this->fallbackApiUrl, $payload);
                 $v1Data = $v1Response->json();
 
                 if ($v1Response->successful() && (($v1Data['status'] ?? '') === 'success' || stripos($v1Data['response'] ?? '', 'Mail Sent') !== false)) {
                     $status = 'sent';
-                    $messageId = $v1Data['message_id'] ?? ('MK-V1-' . uniqid());
+                    $messageId = $v1Data['message_id'] ?? ('MK-V1-'.uniqid());
                     Log::info("Mailketing v1 fallback successfully sent to {$recipientEmail} [{$type}]");
                 } else {
                     $errorMessage = $v1Data['response'] ?? ($resData['message'] ?? $v1Response->body());
@@ -282,7 +287,7 @@ class MailketingService
                 'error_message' => $errorMessage,
             ]);
         } catch (\Throwable $e) {
-            Log::warning("Failed to record EmailLog: " . $e->getMessage());
+            Log::warning('Failed to record EmailLog: '.$e->getMessage());
         }
 
         return $status === 'sent';
@@ -303,22 +308,23 @@ class MailketingService
             $itemsHtml .= "<tr>
                 <td style=\"padding:12px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:#1e293b;font-size:13px;\">{$item->ticketCategory->name}</td>
                 <td style=\"padding:12px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px;\">{$item->quantity}x</td>
-                <td style=\"padding:12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:bold;color:#1e293b;font-size:13px;\">Rp " . number_format($item->subtotal, 0, ',', '.') . "</td>
-            </tr>";
+                <td style=\"padding:12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:bold;color:#1e293b;font-size:13px;\">Rp ".number_format($item->subtotal, 0, ',', '.').'</td>
+            </tr>';
         }
 
         $participantsHtml = '';
         foreach ($transaction->participants as $idx => $p) {
             $num = $idx + 1;
+            $jerseyDesc = ($p->jerseySize->size_code ?? '-').' ('.$p->jersey_type_label.')';
             $participantsHtml .= "<tr style=\"font-size:12px;color:#334155;\">
                 <td style=\"padding:8px 10px;border-bottom:1px solid #f1f5f9;\">#{$num} <strong>{$p->full_name}</strong></td>
                 <td style=\"padding:8px 10px;border-bottom:1px solid #f1f5f9;\">{$p->ticketCategory->name}</td>
-                <td style=\"padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:bold;color:#ea580c;\">{$p->jerseySize->size_code}</td>
+                <td style=\"padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:bold;color:#ea580c;\">{$jerseyDesc}</td>
             </tr>";
         }
 
         $payCodeHtml = '';
-        if (!empty($transaction->tripay_pay_code)) {
+        if (! empty($transaction->tripay_pay_code)) {
             $payCodeHtml = "
             <div style=\"margin:20px 0;padding:18px;background-color:#fffbeb;border:2px dashed #f59e0b;border-radius:14px;text-align:center;\">
                 <div style=\"font-size:11px;font-weight:bold;color:#b45309;text-transform:uppercase;letter-spacing:1px;\">KODE PEMBAYARAN / VIRTUAL ACCOUNT ({$transaction->payment_method})</div>
@@ -327,7 +333,7 @@ class MailketingService
             </div>";
         }
 
-        $expiresAtText = $transaction->expires_at ? $transaction->expires_at->format('d M Y, H:i') . ' WIB' : '60 Menit';
+        $expiresAtText = $transaction->expires_at ? $transaction->expires_at->format('d M Y, H:i').' WIB' : '60 Menit';
 
         return "<!DOCTYPE html>
 <html lang=\"id\">
@@ -390,11 +396,11 @@ class MailketingService
                                     {$itemsHtml}
                                     <tr>
                                         <td colspan=\"2\" style=\"padding:10px 12px;color:#64748b;text-align:right;font-size:12px;\">Biaya Layanan Gateway:</td>
-                                        <td style=\"padding:10px 12px;text-align:right;color:#64748b;font-size:12px;\">Rp " . number_format($transaction->fee_amount, 0, ',', '.') . "</td>
+                                        <td style=\"padding:10px 12px;text-align:right;color:#64748b;font-size:12px;\">Rp ".number_format($transaction->fee_amount, 0, ',', '.').'</td>
                                     </tr>
-                                    <tr style=\"background-color:#fff7ed;border-top:2px solid #fed7aa;\">
-                                        <td colspan=\"2\" style=\"padding:14px 12px;font-weight:bold;font-size:15px;color:#0f172a;text-align:right;\">TOTAL PEMBAYARAN:</td>
-                                        <td style=\"padding:14px 12px;font-weight:bold;font-size:18px;color:#ea580c;text-align:right;\">Rp " . number_format($transaction->grand_total, 0, ',', '.') . "</td>
+                                    <tr style="background-color:#fff7ed;border-top:2px solid #fed7aa;">
+                                        <td colspan="2" style="padding:14px 12px;font-weight:bold;font-size:15px;color:#0f172a;text-align:right;">TOTAL PEMBAYARAN:</td>
+                                        <td style="padding:14px 12px;font-weight:bold;font-size:18px;color:#ea580c;text-align:right;">Rp '.number_format($transaction->grand_total, 0, ',', '.')."</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -458,26 +464,27 @@ class MailketingService
             $itemsHtml .= "<tr>
                 <td style=\"padding:12px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:#1e293b;font-size:13px;\">{$item->ticketCategory->name}</td>
                 <td style=\"padding:12px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px;\">{$item->quantity}x</td>
-                <td style=\"padding:12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:bold;color:#1e293b;font-size:13px;\">Rp " . number_format($item->subtotal, 0, ',', '.') . "</td>
-            </tr>";
+                <td style=\"padding:12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:bold;color:#1e293b;font-size:13px;\">Rp ".number_format($item->subtotal, 0, ',', '.').'</td>
+            </tr>';
         }
 
         $participantsList = '';
         foreach ($transaction->participants as $idx => $p) {
             $num = $idx + 1;
             $bibText = $p->bib_number ? " &bull; Nomor BIB: <strong style=\"color:#ea580c;font-family:Courier,monospace;\">{$p->bib_number}</strong>" : ' &bull; Nomor BIB: <span style="color:#b45309;font-weight:bold;">Menyusul (RPC)</span>';
+            $jerseyDesc = ($p->jerseySize->size_code ?? '-').' ('.$p->jersey_type_label.')';
             $participantsList .= "<tr style=\"font-size:12px;color:#334155;\">
                 <td style=\"padding:10px;border-bottom:1px solid #f1f5f9;\">
                     <strong style=\"color:#0f172a;font-size:13px;\">#{$num} {$p->full_name}</strong><br>
                     <span style=\"color:#64748b;font-size:11px;\">Nama BIB: {$p->bib_name}{$bibText}</span>
                 </td>
                 <td style=\"padding:10px;border-bottom:1px solid #f1f5f9;font-weight:bold;\">{$p->ticketCategory->name}</td>
-                <td style=\"padding:10px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:bold;color:#059669;\">{$p->jerseySize->size_code}</td>
+                <td style=\"padding:10px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:bold;color:#059669;\">{$jerseyDesc}</td>
                 <td style=\"padding:10px;border-bottom:1px solid #f1f5f9;font-family:Courier,monospace;font-size:11px;color:#0284c7;font-weight:bold;\">{$p->ticket_code}</td>
             </tr>";
         }
 
-        $paidAtText = $transaction->paid_at ? $transaction->paid_at->format('d M Y, H:i') . ' WIB' : now()->format('d M Y, H:i') . ' WIB';
+        $paidAtText = $transaction->paid_at ? $transaction->paid_at->format('d M Y, H:i').' WIB' : now()->format('d M Y, H:i').' WIB';
 
         return "<!DOCTYPE html>
 <html lang=\"id\">
@@ -542,11 +549,11 @@ class MailketingService
                                     {$itemsHtml}
                                     <tr>
                                         <td colspan=\"2\" style=\"padding:10px 12px;color:#64748b;text-align:right;font-size:12px;\">Biaya Layanan Gateway:</td>
-                                        <td style=\"padding:10px 12px;text-align:right;color:#64748b;font-size:12px;\">Rp " . number_format($transaction->fee_amount, 0, ',', '.') . "</td>
+                                        <td style=\"padding:10px 12px;text-align:right;color:#64748b;font-size:12px;\">Rp ".number_format($transaction->fee_amount, 0, ',', '.').'</td>
                                     </tr>
-                                    <tr style=\"background-color:#f0fdf4;border-top:2px solid #bbf7d0;\">
-                                        <td colspan=\"2\" style=\"padding:14px 12px;font-weight:bold;font-size:15px;color:#0f172a;text-align:right;\">TOTAL LUNAS:</td>
-                                        <td style=\"padding:14px 12px;font-weight:bold;font-size:18px;color:#059669;text-align:right;\">Rp " . number_format($transaction->grand_total, 0, ',', '.') . "</td>
+                                    <tr style="background-color:#f0fdf4;border-top:2px solid #bbf7d0;">
+                                        <td colspan="2" style="padding:14px 12px;font-weight:bold;font-size:15px;color:#0f172a;text-align:right;">TOTAL LUNAS:</td>
+                                        <td style="padding:14px 12px;font-weight:bold;font-size:18px;color:#059669;text-align:right;">Rp '.number_format($transaction->grand_total, 0, ',', '.')."</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -571,7 +578,7 @@ class MailketingService
                             <div style=\"margin-top:24px;padding:16px;background-color:#eff6ff;border-left:4px solid #3b82f6;border-radius:10px;font-size:13px;color:#1e40af;line-height:1.6;\">
                                 <strong style=\"font-size:14px;color:#1e3a8a;\">&#128230; Informasi Pengambilan Racepack (RPC):</strong><br>
                                 Lokasi: <strong>{$event->rpc_location}</strong><br>
-                                Jadwal: <strong>" . ($event->rpc_start_date ? $event->rpc_start_date->format('d M Y') : '-') . " s/d " . ($event->rpc_end_date ? $event->rpc_end_date->format('d M Y') : '-') . "</strong><br>
+                                Jadwal: <strong>".($event->rpc_start_date ? $event->rpc_start_date->format('d M Y') : '-').' s/d '.($event->rpc_end_date ? $event->rpc_end_date->format('d M Y') : '-')."</strong><br>
                                 <em>Persyaratan: Tunjukkan E-Ticket resmi yang telah dikirim ke masing-masing email peserta beserta kartu identitas asli (KTP/SIM/Paspor).</em>
                             </div>
 
@@ -605,7 +612,7 @@ class MailketingService
         $participant->loadMissing(['transaction.event', 'ticketCategory', 'jerseySize']);
         $transaction = $participant->transaction;
         $event = $transaction->event;
-        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&amp;data=" . urlencode($participant->ticket_code);
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&amp;data='.urlencode($participant->ticket_code);
         $orderUrl = route('order.show', ['invoice' => $transaction->invoice_number]);
 
         $bibDisplay = $participant->bib_number ?: 'MENYUSUL (RPC)';
@@ -666,23 +673,23 @@ class MailketingService
                                     </tr>
                                     <tr>
                                         <td style=\"color:#64748b;\">Ukuran Jersey</td>
-                                        <td>: <strong style=\"color:#ea580c;\">{$participant->jerseySize->size_code}</strong></td>
+                                        <td>: <strong style=\"color:#ea580c;\">{$participant->jerseySize->size_code} ({$participant->jersey_type_label})</strong></td>
                                     </tr>
                                     <tr>
                                         <td style=\"color:#64748b;\">Golongan Darah</td>
-                                        <td>: <strong>" . ($participant->blood_type ?: '-') . "</strong></td>
+                                        <td>: <strong>".($participant->blood_type ?: '-').'</strong></td>
                                     </tr>
                                     <tr>
-                                        <td style=\"color:#64748b;\">Kontak Darurat</td>
-                                        <td>: " . ($participant->emergency_contact_name ? "{$participant->emergency_contact_name} ({$participant->emergency_contact_phone})" : '-') . "</td>
+                                        <td style="color:#64748b;">Kontak Darurat</td>
+                                        <td>: '.($participant->emergency_contact_name ? "{$participant->emergency_contact_name} ({$participant->emergency_contact_phone})" : '-').'</td>
                                     </tr>
                                     <tr>
-                                        <td style=\"color:#64748b;\">Tanggal Race</td>
-                                        <td>: <strong>" . ($event->race_date ? $event->race_date->format('d F Y') : '-') . "</strong></td>
+                                        <td style="color:#64748b;">Tanggal Race</td>
+                                        <td>: <strong>'.($event->race_date ? $event->race_date->format('d F Y') : '-').'</strong></td>
                                     </tr>
                                     <tr>
-                                        <td style=\"color:#64748b;\">Waktu Flag-Off</td>
-                                        <td>: <strong>" . ($event->race_start_time ? substr($event->race_start_time, 0, 5) . ' WIB' : '16:00 WIB') . "</strong></td>
+                                        <td style="color:#64748b;">Waktu Flag-Off</td>
+                                        <td>: <strong>'.($event->race_start_time ? substr($event->race_start_time, 0, 5).' WIB' : '16:00 WIB')."</strong></td>
                                     </tr>
                                     <tr>
                                         <td style=\"color:#64748b;\">Lokasi Flag-Off</td>
@@ -694,7 +701,7 @@ class MailketingService
                             <!-- RPC Details -->
                             <div style=\"margin-top:20px;padding:14px;background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;font-size:12px;color:#475569;text-align:left;line-height:1.6;\">
                                 <strong style=\"color:#0f172a;\">&#128205; Lokasi Pengambilan Racepack:</strong><br>{$event->rpc_location}<br>
-                                <strong style=\"color:#0f172a;\">&#128197; Periode RPC:</strong> " . ($event->rpc_start_date ? $event->rpc_start_date->format('d M Y') : '-') . " s/d " . ($event->rpc_end_date ? $event->rpc_end_date->format('d M Y') : '-') . "<br>
+                                <strong style=\"color:#0f172a;\">&#128197; Periode RPC:</strong> ".($event->rpc_start_date ? $event->rpc_start_date->format('d M Y') : '-').' s/d '.($event->rpc_end_date ? $event->rpc_end_date->format('d M Y') : '-')."<br>
                                 <span style=\"color:#b45309;\"><em>Wajib membawa kartu identitas asli (KTP/SIM/Paspor) saat penukaran.</em></span>
                             </div>
 

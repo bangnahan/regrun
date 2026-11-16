@@ -13,13 +13,13 @@ use App\Services\MailketingService;
 use App\Services\TripayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminController extends Controller
 {
     protected MailketingService $mailketingService;
+
     protected TripayService $tripayService;
 
     public function __construct(MailketingService $mailketingService, TripayService $tripayService)
@@ -43,7 +43,7 @@ class AdminController extends Controller
 
         if ($selectedEvent) {
             $trxQuery->where('event_id', $selectedEvent->id);
-            $participantQuery->whereHas('transaction', fn($q) => $q->where('event_id', $selectedEvent->id));
+            $participantQuery->whereHas('transaction', fn ($q) => $q->where('event_id', $selectedEvent->id));
         }
 
         $totalRevenue = (clone $trxQuery)->where('status', 'PAID')->sum('subtotal');
@@ -51,7 +51,7 @@ class AdminController extends Controller
         $unpaidTransactionsCount = (clone $trxQuery)->where('status', 'UNPAID')->count();
         $expiredTransactionsCount = (clone $trxQuery)->where('status', 'EXPIRED')->count();
 
-        $totalParticipants = (clone $participantQuery)->whereHas('transaction', fn($q) => $q->where('status', 'PAID'))->count();
+        $totalParticipants = (clone $participantQuery)->whereHas('transaction', fn ($q) => $q->where('status', 'PAID'))->count();
 
         // Ticket Categories quota & sales breakdown
         $categories = $selectedEvent ? $selectedEvent->ticketCategories : TicketCategory::all();
@@ -73,16 +73,31 @@ class AdminController extends Controller
     }
 
     /**
-     * Modul Rekap Produksi Jersey Pabrik (Pivot Matrix XS - 5XL)
+     * Modul Rekap Produksi Jersey Pabrik (Pivot Matrix XS - 5XL & Jenis Lengan)
      */
     public function jerseyRecap(Request $request)
     {
         $eventId = $request->get('event_id');
+        $jerseyType = $request->get('jersey_type', 'all');
         $events = Event::all();
         $selectedEvent = $eventId ? Event::find($eventId) : Event::where('is_default', true)->first() ?? $events->first();
 
         $sizes = JerseySize::orderBy('sort_order')->get();
         $categories = $selectedEvent ? $selectedEvent->ticketCategories : TicketCategory::all();
+
+        // Calculate distribution per jersey type (short, long, singlet)
+        $baseParticipantQuery = Participant::whereHas('transaction', function ($q) use ($selectedEvent) {
+            $q->where('status', 'PAID');
+            if ($selectedEvent) {
+                $q->where('event_id', $selectedEvent->id);
+            }
+        });
+
+        $typeTotals = [
+            'short' => (clone $baseParticipantQuery)->where('jersey_type', 'short')->count(),
+            'long' => (clone $baseParticipantQuery)->where('jersey_type', 'long')->count(),
+            'singlet' => (clone $baseParticipantQuery)->where('jersey_type', 'singlet')->count(),
+        ];
 
         // Build matrix data
         $matrix = [];
@@ -98,10 +113,15 @@ class AdminController extends Controller
             ];
 
             foreach ($sizes as $s) {
-                $count = Participant::where('ticket_category_id', $cat->id)
+                $countQuery = Participant::where('ticket_category_id', $cat->id)
                     ->where('jersey_size_id', $s->id)
-                    ->whereHas('transaction', fn($q) => $q->where('status', 'PAID'))
-                    ->count();
+                    ->whereHas('transaction', fn ($q) => $q->where('status', 'PAID'));
+
+                if (in_array($jerseyType, ['short', 'long', 'singlet'], true)) {
+                    $countQuery->where('jersey_type', $jerseyType);
+                }
+
+                $count = $countQuery->count();
 
                 $row['sizes'][$s->size_code] = $count;
                 $row['total'] += $count;
@@ -112,61 +132,75 @@ class AdminController extends Controller
             $matrix[] = $row;
         }
 
-        return view('admin.jersey_recap', compact('events', 'selectedEvent', 'sizes', 'matrix', 'sizeTotals', 'overallTotal'));
+        return view('admin.jersey_recap', compact('events', 'selectedEvent', 'sizes', 'matrix', 'sizeTotals', 'overallTotal', 'typeTotals', 'jerseyType'));
     }
 
     /**
-     * Export Rekap Jersey Pabrik ke file CSV
+     * Export Rekap Jersey Pabrik ke file CSV (Breakdown Model Lengan)
      */
     public function exportJerseyCsv(Request $request): StreamedResponse
     {
         $eventId = $request->get('event_id');
+        $jerseyType = $request->get('jersey_type', 'all');
         $event = Event::find($eventId) ?? Event::first();
         $sizes = JerseySize::orderBy('sort_order')->get();
         $categories = $event ? $event->ticketCategories : TicketCategory::all();
 
-        $fileName = 'rekap_jersey_pabrik_' . ($event ? $event->slug : 'all') . '_' . date('Ymd_His') . '.csv';
+        $fileName = 'rekap_jersey_pabrik_'.($event ? $event->slug : 'all').'_'.date('Ymd_His').'.csv';
 
-        return response()->streamDownload(function () use ($categories, $sizes) {
+        return response()->streamDownload(function () use ($categories, $sizes, $jerseyType) {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF"); // UTF-8 BOM
+            fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM
 
             // Header
-            $headers = ['Kategori Lomba'];
+            $headers = ['Kategori Lomba', 'Model Lengan'];
             foreach ($sizes as $s) {
                 $headers[] = $s->size_code;
             }
             $headers[] = 'TOTAL JERSEY';
-            fputcsv($handle, $headers, ',', '"', "\\");
+            fputcsv($handle, $headers, ',', '"', '\\');
 
-            $sizeTotals = array_fill_keys($sizes->pluck('size_code')->toArray(), 0);
+            $types = ($jerseyType && in_array($jerseyType, ['short', 'long', 'singlet'], true))
+                ? [$jerseyType]
+                : ['short', 'long', 'singlet'];
+
+            $typeLabels = [
+                'short' => 'Lengan Pendek',
+                'long' => 'Lengan Panjang',
+                'singlet' => 'Singlet (Tanpa Lengan)',
+            ];
+
             $grandTotal = 0;
+            $grandSizeTotals = array_fill_keys($sizes->pluck('size_code')->toArray(), 0);
 
             foreach ($categories as $cat) {
-                $row = [$cat->name];
-                $rowTotal = 0;
-                foreach ($sizes as $s) {
-                    $count = Participant::where('ticket_category_id', $cat->id)
-                        ->where('jersey_size_id', $s->id)
-                        ->whereHas('transaction', fn($q) => $q->where('status', 'PAID'))
-                        ->count();
+                foreach ($types as $t) {
+                    $row = [$cat->name, $typeLabels[$t] ?? $t];
+                    $subTotal = 0;
+                    foreach ($sizes as $s) {
+                        $count = Participant::where('ticket_category_id', $cat->id)
+                            ->where('jersey_size_id', $s->id)
+                            ->where('jersey_type', $t)
+                            ->whereHas('transaction', fn ($q) => $q->where('status', 'PAID'))
+                            ->count();
 
-                    $row[] = $count;
-                    $rowTotal += $count;
-                    $sizeTotals[$s->size_code] += $count;
-                    $grandTotal += $count;
+                        $row[] = $count;
+                        $subTotal += $count;
+                        $grandSizeTotals[$s->size_code] += $count;
+                        $grandTotal += $count;
+                    }
+                    $row[] = $subTotal;
+                    fputcsv($handle, $row, ',', '"', '\\');
                 }
-                $row[] = $rowTotal;
-                fputcsv($handle, $row, ',', '"', "\\");
             }
 
             // Footer row
-            $footer = ['TOTAL KESELURUHAN'];
+            $footer = ['TOTAL KESELURUHAN', 'SEMUA TIPE'];
             foreach ($sizes as $s) {
-                $footer[] = $sizeTotals[$s->size_code];
+                $footer[] = $grandSizeTotals[$s->size_code];
             }
             $footer[] = $grandTotal;
-            fputcsv($handle, $footer, ',', '"', "\\");
+            fputcsv($handle, $footer, ',', '"', '\\');
 
             fclose($handle);
         }, $fileName, ['Content-Type' => 'text/csv']);
@@ -226,9 +260,9 @@ class AdminController extends Controller
             $shouldAutoGenerate = $transaction->event?->auto_generate_bib ?? true;
             if ($shouldAutoGenerate) {
                 foreach ($transaction->participants as $p) {
-                    if (!$p->bib_number) {
+                    if (! $p->bib_number) {
                         $codePrefix = substr($p->ticketCategory->code, 0, 2);
-                        $p->update(['bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT)]);
+                        $p->update(['bib_number' => $codePrefix.str_pad((string) $p->id, 4, '0', STR_PAD_LEFT)]);
                     }
                 }
             }
@@ -265,7 +299,7 @@ class AdminController extends Controller
         $query = Participant::with(['transaction.event', 'ticketCategory', 'jerseySize'])->latest();
 
         if ($request->filled('event_id')) {
-            $query->whereHas('transaction', fn($q) => $q->where('event_id', $request->event_id));
+            $query->whereHas('transaction', fn ($q) => $q->where('event_id', $request->event_id));
         }
 
         if ($request->filled('category_id')) {
@@ -274,6 +308,10 @@ class AdminController extends Controller
 
         if ($request->filled('jersey_size_id')) {
             $query->where('jersey_size_id', $request->jersey_size_id);
+        }
+
+        if ($request->filled('jersey_type')) {
+            $query->where('jersey_type', $request->jersey_type);
         }
 
         if ($request->filled('rpc_status')) {
@@ -298,7 +336,7 @@ class AdminController extends Controller
         $events = Event::all();
         $categories = TicketCategory::all();
         $jerseySizes = JerseySize::orderBy('sort_order')->get();
-        $unassignedBibCount = Participant::whereHas('transaction', fn($q) => $q->where('status', 'PAID'))->whereNull('bib_number')->count();
+        $unassignedBibCount = Participant::whereHas('transaction', fn ($q) => $q->where('status', 'PAID'))->whereNull('bib_number')->count();
 
         return view('admin.participants', compact('participants', 'events', 'categories', 'jerseySizes', 'unassignedBibCount'));
     }
@@ -309,7 +347,7 @@ class AdminController extends Controller
     public function toggleRacepack(int $participantId)
     {
         $participant = Participant::findOrFail($participantId);
-        $newStatus = !$participant->is_racepack_collected;
+        $newStatus = ! $participant->is_racepack_collected;
 
         $participant->update([
             'is_racepack_collected' => $newStatus,
@@ -343,7 +381,7 @@ class AdminController extends Controller
         foreach ($participants as $p) {
             $codePrefix = substr($p->ticketCategory->code, 0, 2);
             $p->update([
-                'bib_number' => $codePrefix . str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
+                'bib_number' => $codePrefix.str_pad((string) $p->id, 4, '0', STR_PAD_LEFT),
             ]);
             $count++;
         }
@@ -365,7 +403,7 @@ class AdminController extends Controller
         $bib = $request->filled('bib_number') ? strtoupper(trim($request->bib_number)) : null;
         $participant->update(['bib_number' => $bib]);
 
-        return back()->with('success', "Nomor BIB peserta '{$participant->full_name}' berhasil disimpan: " . ($bib ?: '(Dikosongkan)'));
+        return back()->with('success', "Nomor BIB peserta '{$participant->full_name}' berhasil disimpan: ".($bib ?: '(Dikosongkan)'));
     }
 
     /**
@@ -374,19 +412,19 @@ class AdminController extends Controller
     public function exportParticipantsCsv(Request $request): StreamedResponse
     {
         $query = Participant::with(['transaction.event', 'ticketCategory', 'jerseySize'])
-            ->whereHas('transaction', fn($q) => $q->where('status', 'PAID'))
+            ->whereHas('transaction', fn ($q) => $q->where('status', 'PAID'))
             ->latest();
 
         if ($request->filled('event_id')) {
-            $query->whereHas('transaction', fn($q) => $q->where('event_id', $request->event_id));
+            $query->whereHas('transaction', fn ($q) => $q->where('event_id', $request->event_id));
         }
 
         $participants = $query->get();
-        $fileName = 'data_pelari_' . date('Ymd_His') . '.csv';
+        $fileName = 'data_pelari_'.date('Ymd_His').'.csv';
 
         return response()->streamDownload(function () use ($participants) {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fwrite($handle, "\xEF\xBB\xBF");
 
             fputcsv($handle, [
                 'No Tiket',
@@ -398,6 +436,7 @@ class AdminController extends Controller
                 'Tgl Lahir',
                 'Kategori',
                 'Ukuran Jersey',
+                'Tipe Lengan',
                 'Golongan Darah',
                 'WhatsApp',
                 'Email',
@@ -407,7 +446,7 @@ class AdminController extends Controller
                 'Catatan Medis',
                 'Komunitas',
                 'Status RPC',
-            ], ',', '"', "\\");
+            ], ',', '"', '\\');
 
             foreach ($participants as $p) {
                 fputcsv($handle, [
@@ -420,6 +459,7 @@ class AdminController extends Controller
                     $p->date_of_birth ? $p->date_of_birth->format('Y-m-d') : '',
                     $p->ticketCategory->name ?? '',
                     $p->jerseySize->size_code ?? '',
+                    $p->jersey_type_label,
                     $p->blood_type,
                     $p->phone_number,
                     $p->email,
@@ -429,7 +469,7 @@ class AdminController extends Controller
                     $p->medical_notes ?? '-',
                     $p->running_club ?? '-',
                     $p->is_racepack_collected ? 'Sudah Diambil' : 'Belum Diambil',
-                ], ',', '"', "\\");
+                ], ',', '"', '\\');
             }
 
             fclose($handle);
@@ -492,12 +532,12 @@ class AdminController extends Controller
         if ($request->hasFile('hero_image')) {
             $file = $request->file('hero_image');
             $uploadDir = public_path('uploads/events');
-            if (!file_exists($uploadDir)) {
+            if (! file_exists($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
-            $filename = 'hero_' . Str::slug($request->slug) . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'hero_'.Str::slug($request->slug).'_'.time().'.'.$file->getClientOriginalExtension();
             $file->move($uploadDir, $filename);
-            $heroImagePath = 'uploads/events/' . $filename;
+            $heroImagePath = 'uploads/events/'.$filename;
         }
 
         $event = Event::create([
@@ -522,6 +562,10 @@ class AdminController extends Controller
             'mailketing_sender_email' => $request->mailketing_sender_email,
             'mailketing_sender_name' => $request->mailketing_sender_name,
             'auto_generate_bib' => $request->boolean('auto_generate_bib', true),
+            'allow_jersey_options' => $request->boolean('allow_jersey_options', true),
+            'allow_singlet' => $request->boolean('allow_singlet', true),
+            'allow_long_sleeve' => $request->boolean('allow_long_sleeve', true),
+            'long_sleeve_price' => $request->input('long_sleeve_price', 20000),
             'is_active' => $request->boolean('is_active', true),
             'is_default' => $isDefault,
         ]);
@@ -608,25 +652,25 @@ class AdminController extends Controller
         $heroImagePath = $event->hero_image;
 
         if ($request->boolean('delete_hero_image')) {
-            if ($heroImagePath && !str_starts_with($heroImagePath, 'http') && file_exists(public_path($heroImagePath))) {
+            if ($heroImagePath && ! str_starts_with($heroImagePath, 'http') && file_exists(public_path($heroImagePath))) {
                 @unlink(public_path($heroImagePath));
             }
             $heroImagePath = null;
         }
 
         if ($request->hasFile('hero_image')) {
-            if ($heroImagePath && !str_starts_with($heroImagePath, 'http') && file_exists(public_path($heroImagePath))) {
+            if ($heroImagePath && ! str_starts_with($heroImagePath, 'http') && file_exists(public_path($heroImagePath))) {
                 @unlink(public_path($heroImagePath));
             }
 
             $file = $request->file('hero_image');
             $uploadDir = public_path('uploads/events');
-            if (!file_exists($uploadDir)) {
+            if (! file_exists($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
-            $filename = 'hero_' . Str::slug($request->slug) . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'hero_'.Str::slug($request->slug).'_'.time().'.'.$file->getClientOriginalExtension();
             $file->move($uploadDir, $filename);
-            $heroImagePath = 'uploads/events/' . $filename;
+            $heroImagePath = 'uploads/events/'.$filename;
         }
 
         $event->update([
@@ -651,6 +695,10 @@ class AdminController extends Controller
             'mailketing_sender_email' => $request->mailketing_sender_email,
             'mailketing_sender_name' => $request->mailketing_sender_name,
             'auto_generate_bib' => $request->boolean('auto_generate_bib'),
+            'allow_jersey_options' => $request->boolean('allow_jersey_options', true),
+            'allow_singlet' => $request->boolean('allow_singlet', true),
+            'allow_long_sleeve' => $request->boolean('allow_long_sleeve', true),
+            'long_sleeve_price' => $request->input('long_sleeve_price', 20000),
             'is_active' => $request->boolean('is_active'),
             'is_default' => $isDefault,
         ]);
@@ -900,12 +948,13 @@ class AdminController extends Controller
         $sampleType = $request->input('sample_type', 'invoice');
         $res = $this->mailketingService->sendSampleEmail($request->recipient, $sampleType);
 
-        if (!empty($res['connected'])) {
+        if (! empty($res['connected'])) {
             $typeName = $res['type_name'] ?? 'Transaksi';
+
             return back()->with('success', "Email contoh '{$typeName}' berhasil dikirim ke {$request->recipient} via Mailketing API.");
         }
 
-        return back()->with('error', "Gagal mengirim email: " . ($res['error'] ?? 'Terjadi kesalahan pada server Mailketing.'));
+        return back()->with('error', 'Gagal mengirim email: '.($res['error'] ?? 'Terjadi kesalahan pada server Mailketing.'));
     }
 
     /**
@@ -944,7 +993,7 @@ class AdminController extends Controller
 
         // 2. Save remaining settings
         foreach ($keys as $k) {
-            if ($request->has($k) && !in_array($k, ['tripay_mode', 'tripay_sandbox'])) {
+            if ($request->has($k) && ! in_array($k, ['tripay_mode', 'tripay_sandbox'])) {
                 $group = str_starts_with($k, 'tripay') ? 'tripay' : (str_starts_with($k, 'mailketing') ? 'mailketing' : 'general');
                 SystemSetting::set($k, $request->input($k), $group);
             }

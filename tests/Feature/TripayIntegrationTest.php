@@ -54,7 +54,7 @@ class TripayIntegrationTest extends TestCase
                     'category_code' => $category->code,
                     'quantity' => 1,
                     'price' => $category->current_price,
-                ]
+                ],
             ],
         ];
 
@@ -73,8 +73,8 @@ class TripayIntegrationTest extends TestCase
                     'emergency_contact_name' => 'Siti',
                     'emergency_contact_phone' => '081299998888',
                     'emergency_contact_relation' => 'Istri',
-                ]
-            ]
+                ],
+            ],
         ];
 
         $response = $this->withSession($sessionData)

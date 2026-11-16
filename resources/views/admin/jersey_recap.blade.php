@@ -19,8 +19,8 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-            <!-- Event Filter -->
-            <form method="GET" action="{{ route('admin.jersey_recap') }}">
+            <!-- Event & Jersey Type Filter -->
+            <form method="GET" action="{{ route('admin.jersey_recap') }}" class="flex items-center gap-2">
                 <select name="event_id" onchange="this.form.submit()" class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500">
                     @foreach($events as $ev)
                         <option value="{{ $ev->id }}" {{ ($selectedEvent && $selectedEvent->id === $ev->id) ? 'selected' : '' }}>
@@ -28,12 +28,19 @@
                         </option>
                     @endforeach
                 </select>
+
+                <select name="jersey_type" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="all" {{ ($jerseyType ?? 'all') === 'all' ? 'selected' : '' }}>Semua Model Lengan</option>
+                    <option value="short" {{ ($jerseyType ?? '') === 'short' ? 'selected' : '' }}>👕 Lengan Pendek</option>
+                    <option value="long" {{ ($jerseyType ?? '') === 'long' ? 'selected' : '' }}>👔 Lengan Panjang</option>
+                    <option value="singlet" {{ ($jerseyType ?? '') === 'singlet' ? 'selected' : '' }}>🎽 Singlet</option>
+                </select>
             </form>
 
             <!-- Export to CSV Button -->
-            <a href="{{ route('admin.jersey_recap.export', ['event_id' => $selectedEvent->id ?? null]) }}" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+            <a href="{{ route('admin.jersey_recap.export', ['event_id' => $selectedEvent->id ?? null, 'jersey_type' => $jerseyType ?? 'all']) }}" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
                 <span>📥</span>
-                <span>Download Rekap Pabrik (CSV/Excel)</span>
+                <span>Download Rekap Pabrik (CSV)</span>
             </a>
 
             <!-- Print Button -->
@@ -64,11 +71,54 @@
         </div>
     </div>
 
+    <!-- Model Lengan Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <a href="{{ route('admin.jersey_recap', ['event_id' => $selectedEvent->id ?? null, 'jersey_type' => 'short']) }}" 
+           class="p-4 rounded-2xl border transition {{ ($jerseyType ?? '') === 'short' ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-800' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300 shadow-sm' }}">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider {{ ($jerseyType ?? '') === 'short' ? 'text-slate-300' : 'text-slate-500' }}">👕 Lengan Pendek</span>
+                <span class="text-[10px] px-2 py-0.5 rounded font-bold {{ ($jerseyType ?? '') === 'short' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600' }}">Standar</span>
+            </div>
+            <div class="text-2xl font-black mt-2">{{ number_format($typeTotals['short'] ?? 0) }} <span class="text-xs font-semibold">pcs</span></div>
+            <div class="text-[11px] mt-1 {{ ($jerseyType ?? '') === 'short' ? 'text-slate-400' : 'text-slate-400' }}">Klik untuk filter matriks lengan pendek</div>
+        </a>
+
+        <a href="{{ route('admin.jersey_recap', ['event_id' => $selectedEvent->id ?? null, 'jersey_type' => 'long']) }}" 
+           class="p-4 rounded-2xl border transition {{ ($jerseyType ?? '') === 'long' ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-500' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300 shadow-sm' }}">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider {{ ($jerseyType ?? '') === 'long' ? 'text-amber-100' : 'text-amber-700' }}">👔 Lengan Panjang</span>
+                <span class="text-[10px] px-2 py-0.5 rounded font-bold {{ ($jerseyType ?? '') === 'long' ? 'bg-amber-700 text-amber-100' : 'bg-amber-100 text-amber-800' }}">+Rp 20.000</span>
+            </div>
+            <div class="text-2xl font-black mt-2">{{ number_format($typeTotals['long'] ?? 0) }} <span class="text-xs font-semibold">pcs</span></div>
+            <div class="text-[11px] mt-1 {{ ($jerseyType ?? '') === 'long' ? 'text-amber-100' : 'text-slate-400' }}">Klik untuk filter matriks lengan panjang</div>
+        </a>
+
+        <a href="{{ route('admin.jersey_recap', ['event_id' => $selectedEvent->id ?? null, 'jersey_type' => 'singlet']) }}" 
+           class="p-4 rounded-2xl border transition {{ ($jerseyType ?? '') === 'singlet' ? 'bg-sky-700 text-white border-sky-700 shadow-md ring-2 ring-sky-600' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300 shadow-sm' }}">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider {{ ($jerseyType ?? '') === 'singlet' ? 'text-sky-100' : 'text-sky-700' }}">🎽 Singlet / Sleeveless</span>
+                <span class="text-[10px] px-2 py-0.5 rounded font-bold {{ ($jerseyType ?? '') === 'singlet' ? 'bg-sky-800 text-sky-100' : 'bg-sky-100 text-sky-800' }}">Standar</span>
+            </div>
+            <div class="text-2xl font-black mt-2">{{ number_format($typeTotals['singlet'] ?? 0) }} <span class="text-xs font-semibold">pcs</span></div>
+            <div class="text-[11px] mt-1 {{ ($jerseyType ?? '') === 'singlet' ? 'text-sky-100' : 'text-slate-400' }}">Klik untuk filter matriks singlet</div>
+        </a>
+    </div>
+
     <!-- The Pivot Matrix Table -->
     <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
-            <div class="font-bold text-sm">
-                Matriks Produksi: Kategori Lomba &times; Ukuran Jersey (XS &mdash; 5XL)
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-sm">
+                    Matriks Produksi: Kategori Lomba &times; Ukuran Jersey (XS &mdash; 5XL)
+                </span>
+                @if(($jerseyType ?? 'all') !== 'all')
+                    <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white">
+                        Filter: {{ $jerseyType === 'long' ? 'Lengan Panjang' : ($jerseyType === 'singlet' ? 'Singlet' : 'Lengan Pendek') }}
+                    </span>
+                    <a href="{{ route('admin.jersey_recap', ['event_id' => $selectedEvent->id ?? null, 'jersey_type' => 'all']) }}" class="text-[10px] text-slate-400 hover:text-white underline">
+                        Reset Filter
+                    </a>
+                @endif
             </div>
             <span class="text-[11px] text-slate-400">Pola: Unisex Standard Running Fit</span>
         </div>

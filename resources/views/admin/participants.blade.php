@@ -36,6 +36,16 @@
             </div>
 
             <div>
+                <label class="block font-bold text-slate-600 mb-1">Model Lengan</label>
+                <select name="jersey_type" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+                    <option value="">Semua Model</option>
+                    <option value="short" {{ request('jersey_type') === 'short' ? 'selected' : '' }}>👕 Pendek</option>
+                    <option value="long" {{ request('jersey_type') === 'long' ? 'selected' : '' }}>👔 Panjang (+20k)</option>
+                    <option value="singlet" {{ request('jersey_type') === 'singlet' ? 'selected' : '' }}>🎽 Singlet</option>
+                </select>
+            </div>
+
+            <div>
                 <label class="block font-bold text-slate-600 mb-1">Event</label>
                 <select name="event_id" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
                     <option value="">Semua Event</option>
@@ -156,6 +166,19 @@
                                 <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-extrabold text-xs">
                                     {{ $p->jerseySize->size_code }}
                                 </span>
+                                @if($p->jersey_type === 'long')
+                                    <span class="block mt-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                                        👔 Lengan Panjang
+                                    </span>
+                                @elseif($p->jersey_type === 'singlet')
+                                    <span class="block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-900 border border-sky-300 whitespace-nowrap">
+                                        🎽 Singlet
+                                    </span>
+                                @else
+                                    <span class="block mt-0.5 text-[10px] text-slate-500 font-medium">
+                                        👕 Pendek
+                                    </span>
+                                @endif
                             </td>
                             <td class="p-4 font-bold text-slate-700">
                                 {{ $p->blood_type }}

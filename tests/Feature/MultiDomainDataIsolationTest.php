@@ -4,11 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Event;
 use App\Models\EventDomain;
+use App\Models\JerseySize;
 use App\Models\TicketCategory;
 use App\Models\Transaction;
-use App\Models\TransactionItem;
-use App\Models\Participant;
-use App\Models\JerseySize;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,8 +15,11 @@ class MultiDomainDataIsolationTest extends TestCase
     use RefreshDatabase;
 
     protected Event $eventA;
+
     protected Event $eventB;
+
     protected TicketCategory $categoryA;
+
     protected TicketCategory $categoryB;
 
     protected function setUp(): void
@@ -215,11 +216,11 @@ class MultiDomainDataIsolationTest extends TestCase
         ]);
 
         // Attempt to view Event B's order through Domain A -> Must 404 (Not Found on this domain)
-        $responseOnDomainA = $this->get('http://tiket.marathon2026.com/order/' . $trxB->invoice_number);
+        $responseOnDomainA = $this->get('http://tiket.marathon2026.com/order/'.$trxB->invoice_number);
         $responseOnDomainA->assertStatus(404);
 
         // View Event B's order through Domain B -> Must 200 OK
-        $responseOnDomainB = $this->get('http://tiket.jakartanightrun.id/order/' . $trxB->invoice_number);
+        $responseOnDomainB = $this->get('http://tiket.jakartanightrun.id/order/'.$trxB->invoice_number);
         $responseOnDomainB->assertStatus(200);
         $responseOnDomainB->assertSee('INV-EVENT-B-999');
         $responseOnDomainB->assertSee('Jakarta Night 10K');

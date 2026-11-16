@@ -31,6 +31,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $rpc_end_date
  * @property string|null $rpc_notes
  * @property bool $auto_generate_bib
+ * @property bool $allow_jersey_options
+ * @property bool $allow_singlet
+ * @property bool $allow_long_sleeve
+ * @property float $long_sleeve_price
  * @property bool $is_active
  * @property bool $is_default
  * @property string|null $tripay_merchant_code
@@ -69,6 +73,10 @@ class Event extends Model
         'custom_css',
         'custom_domain',
         'auto_generate_bib',
+        'allow_jersey_options',
+        'allow_singlet',
+        'allow_long_sleeve',
+        'long_sleeve_price',
         'is_active',
         'is_default',
         'tripay_merchant_code',
@@ -84,6 +92,10 @@ class Event extends Model
         'rpc_start_date' => 'date',
         'rpc_end_date' => 'date',
         'auto_generate_bib' => 'boolean',
+        'allow_jersey_options' => 'boolean',
+        'allow_singlet' => 'boolean',
+        'allow_long_sleeve' => 'boolean',
+        'long_sleeve_price' => 'decimal:2',
         'is_active' => 'boolean',
         'is_default' => 'boolean',
     ];

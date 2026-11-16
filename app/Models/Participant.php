@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
  * @property int $transaction_id
  * @property int $ticket_category_id
  * @property int|null $jersey_size_id
+ * @property string $jersey_type
+ * @property float $jersey_surcharge
  * @property string $ticket_code
  * @property string|null $bib_number
  * @property string $full_name
@@ -42,6 +44,7 @@ use Illuminate\Support\Str;
  * @property-read JerseySize|null $jerseySize
  * @property-read User|null $racepackCollector
  * @property-read Collection<int, EmailLog> $emailLogs
+ * @property-read string $jersey_type_label
  */
 class Participant extends Model
 {
@@ -51,6 +54,8 @@ class Participant extends Model
         'transaction_id',
         'ticket_category_id',
         'jersey_size_id',
+        'jersey_type',
+        'jersey_surcharge',
         'ticket_code',
         'bib_number',
         'full_name',
@@ -77,7 +82,17 @@ class Participant extends Model
         'date_of_birth' => 'date',
         'is_racepack_collected' => 'boolean',
         'racepack_collected_at' => 'datetime',
+        'jersey_surcharge' => 'decimal:2',
     ];
+
+    public function getJerseyTypeLabelAttribute(): string
+    {
+        return match ($this->jersey_type) {
+            'long' => 'Lengan Panjang',
+            'singlet' => 'Singlet',
+            default => 'Lengan Pendek',
+        };
+    }
 
     /**
      * @return BelongsTo<Transaction, $this>

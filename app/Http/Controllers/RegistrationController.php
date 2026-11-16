@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\EventDomain;
 use App\Models\JerseySize;
 use App\Models\Participant;
 use App\Models\TicketCategory;
@@ -18,6 +19,7 @@ use Illuminate\Support\Str;
 class RegistrationController extends Controller
 {
     protected TripayService $tripayService;
+
     protected MailketingService $mailketingService;
 
     public function __construct(TripayService $tripayService, MailketingService $mailketingService)
@@ -33,7 +35,7 @@ class RegistrationController extends Controller
     {
         $event = Event::getActiveEvent($slug, $request->getHost());
 
-        if (!$event) {
+        if (! $event) {
             abort(404, 'Event lari tidak ditemukan atau pendaftaran belum dibuka.');
         }
 
@@ -52,7 +54,7 @@ class RegistrationController extends Controller
             $eventId = session('registration_event_id');
             $selectedTickets = session('registration_tickets');
 
-            if (!$eventId || empty($selectedTickets)) {
+            if (! $eventId || empty($selectedTickets)) {
                 return redirect()->route('register.index')->with('info', 'Silakan pilih tiket terlebih dahulu untuk melanjutkan pendaftaran.');
             }
 
@@ -82,12 +84,12 @@ class RegistrationController extends Controller
         // Security & Tenant Isolation: Validate that if domain is bound to an event, event_id must match
         $currentEvent = $request->attributes->get('currentEvent') ?? (app()->bound('currentEvent') ? app('currentEvent') : null);
         if ($currentEvent && (int) $request->event_id !== (int) $currentEvent->id) {
-            $cleanHost = \App\Models\EventDomain::normalizeDomain($request->getHost());
-            $isDedicatedDomain = \App\Models\EventDomain::where('domain', $cleanHost)->exists()
-                || \App\Models\Event::where('custom_domain', $cleanHost)->exists();
+            $cleanHost = EventDomain::normalizeDomain($request->getHost());
+            $isDedicatedDomain = EventDomain::where('domain', $cleanHost)->exists()
+                || Event::where('custom_domain', $cleanHost)->exists();
 
             if ($isDedicatedDomain) {
-                abort(403, 'Akses ditolak: ID Event (' . $request->event_id . ') tidak sesuai dengan domain resmi event ini (' . $currentEvent->title . ').');
+                abort(403, 'Akses ditolak: ID Event ('.$request->event_id.') tidak sesuai dengan domain resmi event ini ('.$currentEvent->title.').');
             }
         }
 
@@ -173,7 +175,7 @@ class RegistrationController extends Controller
         $eventId = session('registration_event_id');
         $selectedTickets = session('registration_tickets');
 
-        if (!$eventId || empty($selectedTickets)) {
+        if (! $eventId || empty($selectedTickets)) {
             return redirect()->route('register.index')->with('error', 'Sesi pendaftaran Anda telah berakhir. Silakan pilih tiket kembali.');
         }
 
@@ -188,15 +190,24 @@ class RegistrationController extends Controller
             }
 
             // Calculate totals
-            $subtotal = 0;
-            foreach ($selectedTickets as $item) {
-                $subtotal += ($item['price'] * $item['quantity']);
+            $longSleevePrice = (float) ($event->long_sleeve_price ?? 20000);
+            $jerseySurchargeTotal = 0;
+            foreach ($participantsData as $p) {
+                if (($p['jersey_type'] ?? 'short') === 'long') {
+                    $jerseySurchargeTotal += $longSleevePrice;
+                }
             }
+
+            $ticketsSubtotal = 0;
+            foreach ($selectedTickets as $item) {
+                $ticketsSubtotal += ($item['price'] * $item['quantity']);
+            }
+            $subtotal = $ticketsSubtotal + $jerseySurchargeTotal;
 
             // Get Tripay payment channels
             $paymentChannels = $this->tripayService->getPaymentChannels();
 
-            return view('registration.step3_checkout', compact('event', 'selectedTickets', 'participantsData', 'subtotal', 'paymentChannels'));
+            return view('registration.step3_checkout', compact('event', 'selectedTickets', 'participantsData', 'ticketsSubtotal', 'jerseySurchargeTotal', 'subtotal', 'paymentChannels'));
         }
 
         // Sanitize string inputs in participants
@@ -207,7 +218,7 @@ class RegistrationController extends Controller
                     foreach ($p as $k => $v) {
                         $p[$k] = is_string($v) ? trim($v) : $v;
                     }
-                    if (!empty($p['bib_name'])) {
+                    if (! empty($p['bib_name'])) {
                         $p['bib_name'] = mb_substr($p['bib_name'], 0, 12);
                     }
                 }
@@ -225,6 +236,7 @@ class RegistrationController extends Controller
             'participants.*.phone_number' => 'required|string|max:30',
             'participants.*.email' => 'required|email|max:150',
             'participants.*.jersey_size_id' => 'required|exists:jersey_sizes,id',
+            'participants.*.jersey_type' => 'nullable|in:short,long,singlet',
             'participants.*.blood_type' => 'required|string',
             'participants.*.bib_name' => 'required|string|max:12',
             'participants.*.emergency_contact_name' => 'required|string|max:100',
@@ -255,15 +267,24 @@ class RegistrationController extends Controller
         session(['registration_participants' => $participantsData]);
 
         // Calculate totals
-        $subtotal = 0;
-        foreach ($selectedTickets as $item) {
-            $subtotal += ($item['price'] * $item['quantity']);
+        $longSleevePrice = (float) ($event->long_sleeve_price ?? 20000);
+        $jerseySurchargeTotal = 0;
+        foreach ($participantsData as $p) {
+            if (($p['jersey_type'] ?? 'short') === 'long') {
+                $jerseySurchargeTotal += $longSleevePrice;
+            }
         }
+
+        $ticketsSubtotal = 0;
+        foreach ($selectedTickets as $item) {
+            $ticketsSubtotal += ($item['price'] * $item['quantity']);
+        }
+        $subtotal = $ticketsSubtotal + $jerseySurchargeTotal;
 
         // Get Tripay payment channels
         $paymentChannels = $this->tripayService->getPaymentChannels();
 
-        return view('registration.step3_checkout', compact('event', 'selectedTickets', 'participantsData', 'subtotal', 'paymentChannels'));
+        return view('registration.step3_checkout', compact('event', 'selectedTickets', 'participantsData', 'ticketsSubtotal', 'jerseySurchargeTotal', 'subtotal', 'paymentChannels'));
     }
 
     /**
@@ -283,7 +304,7 @@ class RegistrationController extends Controller
         $selectedTickets = session('registration_tickets');
         $participantsData = session('registration_participants');
 
-        if (!$eventId || empty($selectedTickets) || empty($participantsData)) {
+        if (! $eventId || empty($selectedTickets) || empty($participantsData)) {
             return redirect()->route('register.index')->with('error', 'Sesi telah kedaluwarsa. Silakan mulai kembali.');
         }
 
@@ -310,12 +331,22 @@ class RegistrationController extends Controller
                 $subtotal += ($item['price'] * $item['quantity']);
             }
 
+            // Calculate jersey surcharge (e.g. Long sleeve)
+            $longSleevePrice = (float) ($event->long_sleeve_price ?? 20000);
+            $jerseySurchargeTotal = 0;
+            foreach ($participantsData as $p) {
+                if (($p['jersey_type'] ?? 'short') === 'long') {
+                    $jerseySurchargeTotal += $longSleevePrice;
+                }
+            }
+            $subtotal += $jerseySurchargeTotal;
+
             // Estimate admin fee (default Tripay fee flat 4.500)
             $feeAmount = 4500;
             $grandTotal = $subtotal + $feeAmount;
 
-            $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(Str::random(5));
-            $merchantRef = 'TRX-' . time() . '-' . Str::random(4);
+            $invoiceNumber = 'INV-'.date('Ymd').'-'.strtoupper(Str::random(5));
+            $merchantRef = 'TRX-'.time().'-'.Str::random(4);
 
             // 2. Create Transaction
             $trx = Transaction::create([
@@ -355,11 +386,15 @@ class RegistrationController extends Controller
                 for ($i = 0; $i < $item['quantity']; $i++) {
                     $pData = $participantsData[$participantIndex] ?? [];
                     [$ticketCode, $qrCodeHash] = Participant::generateUniqueCodes();
+                    $jType = isset($pData['jersey_type']) && in_array($pData['jersey_type'], ['short', 'long', 'singlet'], true) ? $pData['jersey_type'] : 'short';
+                    $jSurcharge = ($jType === 'long') ? $longSleevePrice : 0;
 
                     Participant::create([
                         'transaction_id' => $trx->id,
                         'ticket_category_id' => $catId,
                         'jersey_size_id' => $pData['jersey_size_id'],
+                        'jersey_type' => $jType,
+                        'jersey_surcharge' => $jSurcharge,
                         'ticket_code' => $ticketCode,
                         'full_name' => $pData['full_name'],
                         'identity_number' => $pData['identity_number'],
@@ -394,7 +429,7 @@ class RegistrationController extends Controller
             }
             $transaction->update(['status' => 'FAILED']);
 
-            return back()->with('error', 'Gagal menghubungi Tripay: ' . ($tripayResult['message'] ?? 'Silakan coba metode pembayaran lain atau hubungi panitia.'));
+            return back()->with('error', 'Gagal menghubungi Tripay: '.($tripayResult['message'] ?? 'Silakan coba metode pembayaran lain atau hubungi panitia.'));
         }
 
         $transaction->update([
@@ -411,14 +446,14 @@ class RegistrationController extends Controller
         try {
             $this->mailketingService->sendPendingPaymentEmail($transaction);
         } catch (\Throwable $e) {
-            Log::warning('Mailketing pending payment email failed: ' . $e->getMessage());
+            Log::warning('Mailketing pending payment email failed: '.$e->getMessage());
         }
 
         // Clear registration sessions
         session()->forget(['registration_tickets', 'registration_participants', 'registration_event_id']);
 
         // Redirect to Tripay hosted checkout page if available
-        if (!empty($tripayResult['checkout_url']) && empty($tripayResult['is_mock'])) {
+        if (! empty($tripayResult['checkout_url']) && empty($tripayResult['is_mock'])) {
             return redirect()->away($tripayResult['checkout_url']);
         }
 

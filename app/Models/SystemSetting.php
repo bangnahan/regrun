@@ -18,6 +18,7 @@ class SystemSetting extends Model
     public static function get(string $key, $default = null)
     {
         $setting = self::where('key_name', $key)->first();
+
         return $setting ? $setting->key_value : $default;
     }
 

@@ -176,6 +176,36 @@
                             @enderror
                         </div>
 
+                        <!-- Model Lengan Jersey -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block font-bold text-slate-700">Model Lengan Jersey <span class="text-rose-500">*</span></label>
+                                @if($event->allow_long_sleeve ?? true)
+                                    <span class="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
+                                        Lengan Panjang +Rp {{ number_format($event->long_sleeve_price ?? 20000, 0, ',', '.') }}
+                                    </span>
+                                @endif
+                            </div>
+                            <select name="participants[{{ $currentIndex }}][jersey_type]" required class="w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('participants.'.$currentIndex.'.jersey_type') ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300' }} focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white font-semibold">
+                                <option value="short" {{ old('participants.'.$currentIndex.'.jersey_type', $sessionParticipants[$currentIndex]['jersey_type'] ?? 'short') === 'short' ? 'selected' : '' }}>
+                                    👕 Lengan Pendek (Standar)
+                                </option>
+                                @if($event->allow_singlet ?? true)
+                                    <option value="singlet" {{ old('participants.'.$currentIndex.'.jersey_type', $sessionParticipants[$currentIndex]['jersey_type'] ?? '') === 'singlet' ? 'selected' : '' }}>
+                                        🎽 Singlet / Tanpa Lengan (Standar)
+                                    </option>
+                                @endif
+                                @if($event->allow_long_sleeve ?? true)
+                                    <option value="long" {{ old('participants.'.$currentIndex.'.jersey_type', $sessionParticipants[$currentIndex]['jersey_type'] ?? '') === 'long' ? 'selected' : '' }}>
+                                        👔 Lengan Panjang (+Rp {{ number_format($event->long_sleeve_price ?? 20000, 0, ',', '.') }})
+                                    </option>
+                                @endif
+                            </select>
+                            @error('participants.'.$currentIndex.'.jersey_type')
+                                <p class="text-rose-600 text-[11px] mt-1 font-semibold">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Nama di BIB (Maks 12 Karakter) -->
                         <div>
                             <div class="flex items-center justify-between mb-1.5">

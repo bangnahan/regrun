@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Event;
 use App\Models\PaymentLog;
 use App\Models\SystemSetting;
 use App\Models\Transaction;
@@ -11,10 +12,15 @@ use Illuminate\Support\Facades\Log;
 class TripayService
 {
     protected string $apiKey;
+
     protected string $privateKey;
+
     protected string $merchantCode;
+
     protected bool $isSandbox;
+
     protected string $baseUrl;
+
     protected string $mode;
 
     public function __construct()
@@ -83,26 +89,26 @@ class TripayService
      */
     public function getPaymentChannels(): array
     {
-        return cache()->remember('tripay_payment_channels_' . md5($this->apiKey . $this->baseUrl), 300, function () {
+        return cache()->remember('tripay_payment_channels_'.md5($this->apiKey.$this->baseUrl), 300, function () {
             try {
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->apiKey,
-                ])->timeout(8)->get($this->baseUrl . 'merchant/payment-channel');
+                    'Authorization' => 'Bearer '.$this->apiKey,
+                ])->timeout(8)->get($this->baseUrl.'merchant/payment-channel');
 
                 if ($response->successful()) {
                     $data = $response->json();
-                    if (!empty($data['data']) && is_array($data['data'])) {
+                    if (! empty($data['data']) && is_array($data['data'])) {
                         // Filter only active channels
-                        $activeChannels = array_filter($data['data'], fn($c) => !empty($c['active']));
-                        if (!empty($activeChannels)) {
+                        $activeChannels = array_filter($data['data'], fn ($c) => ! empty($c['active']));
+                        if (! empty($activeChannels)) {
                             return array_values($activeChannels);
                         }
                     }
                 } else {
-                    Log::warning('Tripay getPaymentChannels returned HTTP ' . $response->status() . ': ' . $response->body());
+                    Log::warning('Tripay getPaymentChannels returned HTTP '.$response->status().': '.$response->body());
                 }
             } catch (\Throwable $e) {
-                Log::warning('Tripay API getPaymentChannels error: ' . $e->getMessage());
+                Log::warning('Tripay API getPaymentChannels error: '.$e->getMessage());
             }
 
             return $this->getDefaultChannels();
@@ -120,18 +126,19 @@ class TripayService
                 'status' => 'UNCONFIGURED',
                 'merchant_code' => $this->merchantCode ?: '(Belum diatur)',
                 'mode' => $this->isSandbox ? 'Sandbox' : 'Production',
-                'error' => 'Kredensial Tripay ' . ($this->isSandbox ? 'Sandbox' : 'Produksi') . ' belum dikonfigurasi.',
+                'error' => 'Kredensial Tripay '.($this->isSandbox ? 'Sandbox' : 'Produksi').' belum dikonfigurasi.',
             ];
         }
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-            ])->timeout(8)->get($this->baseUrl . 'merchant/payment-channel');
+                'Authorization' => 'Bearer '.$this->apiKey,
+            ])->timeout(8)->get($this->baseUrl.'merchant/payment-channel');
 
             if ($response->successful()) {
                 $data = $response->json();
                 $channels = $data['data'] ?? [];
+
                 return [
                     'connected' => true,
                     'status' => 'OK',
@@ -144,7 +151,7 @@ class TripayService
 
             return [
                 'connected' => false,
-                'status' => 'HTTP ' . $response->status(),
+                'status' => 'HTTP '.$response->status(),
                 'merchant_code' => $this->merchantCode,
                 'mode' => $this->isSandbox ? 'Sandbox' : 'Production',
                 'error' => $response->json('message') ?? $response->body(),
@@ -170,7 +177,7 @@ class TripayService
         // Production Tripay uses QRIS channel for National QRIS
         if (strtoupper($channelCode) === 'QRIS' && $this->isSandbox) {
             $channelCode = 'QRIS2';
-        } elseif (strtoupper($channelCode) === 'QRIS2' && !$this->isSandbox) {
+        } elseif (strtoupper($channelCode) === 'QRIS2' && ! $this->isSandbox) {
             $channelCode = 'QRIS';
         }
 
@@ -181,7 +188,7 @@ class TripayService
         // Multi-domain / Event-level credentials override if configured on the event
         if ($transaction->event) {
             $eventCreds = $transaction->event->getTripayCredentials();
-            if (!empty($eventCreds['is_custom'])) {
+            if (! empty($eventCreds['is_custom'])) {
                 $merchantCode = $eventCreds['merchant_code'];
                 $apiKey = $eventCreds['api_key'];
                 $privateKey = $eventCreds['private_key'];
@@ -191,7 +198,7 @@ class TripayService
         $merchantRef = $transaction->invoice_number;
         // Amount sent to Tripay is the pure order subtotal; Tripay calculates & appends customer fee
         $amount = (int) round($transaction->subtotal);
-        $signature = hash_hmac('sha256', $merchantCode . $merchantRef . $amount, $privateKey);
+        $signature = hash_hmac('sha256', $merchantCode.$merchantRef.$amount, $privateKey);
 
         $orderItems = [];
         foreach ($transaction->items as $item) {
@@ -203,20 +210,33 @@ class TripayService
             ];
         }
 
+        // Add jersey surcharge items if any participant selected extra options (e.g. Long Sleeve)
+        $longSleeveCount = $transaction->participants->where('jersey_type', 'long')->count();
+        $totalSurcharge = (int) round((float) $transaction->participants->sum('jersey_surcharge'));
+        if ($totalSurcharge > 0 && $longSleeveCount > 0) {
+            $unitSurcharge = (int) round($totalSurcharge / $longSleeveCount);
+            $orderItems[] = [
+                'name' => 'Tambahan Jersey Lengan Panjang',
+                'price' => $unitSurcharge,
+                'quantity' => $longSleeveCount,
+                'subtotal' => $totalSurcharge,
+            ];
+        }
+
         // Multi-domain dynamic return and callback URLs
         $domain = $transaction->event?->getPrimaryDomain() ?? request()->getHost();
         $scheme = request()->isSecure() ? 'https://' : 'http://';
-        $eventBaseUrl = $scheme . $domain;
+        $eventBaseUrl = $scheme.$domain;
 
         $callbackUrl = config('services.tripay.callback_url');
         if (empty($callbackUrl)) {
-            if (!str_contains($domain, 'localhost') && !str_contains($domain, '127.0.0.1')) {
-                $callbackUrl = rtrim($eventBaseUrl, '/') . '/api/tripay/callback';
+            if (! str_contains($domain, 'localhost') && ! str_contains($domain, '127.0.0.1')) {
+                $callbackUrl = rtrim($eventBaseUrl, '/').'/api/tripay/callback';
             }
         }
 
-        $returnUrl = (!str_contains($domain, 'localhost') && !str_contains($domain, '127.0.0.1'))
-            ? rtrim($eventBaseUrl, '/') . '/order/' . $transaction->invoice_number
+        $returnUrl = (! str_contains($domain, 'localhost') && ! str_contains($domain, '127.0.0.1'))
+            ? rtrim($eventBaseUrl, '/').'/order/'.$transaction->invoice_number
             : route('order.show', ['invoice' => $transaction->invoice_number]);
 
         $payload = [
@@ -232,14 +252,14 @@ class TripayService
             'signature' => $signature,
         ];
 
-        if (!empty($callbackUrl)) {
+        if (! empty($callbackUrl)) {
             $payload['callback_url'] = $callbackUrl;
         }
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-            ])->timeout(12)->post($this->baseUrl . 'transaction/create', $payload);
+                'Authorization' => 'Bearer '.$this->apiKey,
+            ])->timeout(12)->post($this->baseUrl.'transaction/create', $payload);
 
             $resData = $response->json();
 
@@ -255,8 +275,9 @@ class TripayService
                 'ip_address' => request()->ip(),
             ]);
 
-            if ($response->successful() && !empty($resData['data'])) {
+            if ($response->successful() && ! empty($resData['data'])) {
                 $trxData = $resData['data'];
+
                 return [
                     'success' => true,
                     'reference' => $trxData['reference'] ?? null,
@@ -270,17 +291,17 @@ class TripayService
                 ];
             }
 
-            $errMsg = $resData['message'] ?? 'Tripay mengembalikan kode status ' . $response->status();
-            Log::error('Tripay createTransaction error: ' . $errMsg, ['payload' => $payload, 'response' => $resData]);
+            $errMsg = $resData['message'] ?? 'Tripay mengembalikan kode status '.$response->status();
+            Log::error('Tripay createTransaction error: '.$errMsg, ['payload' => $payload, 'response' => $resData]);
         } catch (\Throwable $e) {
             $errMsg = $e->getMessage();
-            Log::error('Tripay API createTransaction exception: ' . $errMsg);
+            Log::error('Tripay API createTransaction exception: '.$errMsg);
         }
 
         // Testing environment mock fallback only
         if (app()->environment('testing')) {
-            $mockRef = 'DEV-TEST-' . strtoupper(bin2hex(random_bytes(4)));
-            $mockPayCode = '88' . str_pad((string) rand(10000000, 99999999), 10, '0', STR_PAD_LEFT);
+            $mockRef = 'DEV-TEST-'.strtoupper(bin2hex(random_bytes(4)));
+            $mockPayCode = '88'.str_pad((string) rand(10000000, 99999999), 10, '0', STR_PAD_LEFT);
 
             return [
                 'success' => true,
@@ -288,7 +309,7 @@ class TripayService
                 'reference' => $mockRef,
                 'checkout_url' => route('order.show', ['invoice' => $transaction->invoice_number]),
                 'pay_code' => $mockPayCode,
-                'qr_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode("TRIPAY:{$mockRef}:{$amount}"),
+                'qr_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='.urlencode("TRIPAY:{$mockRef}:{$amount}"),
                 'fee' => 4250,
                 'amount' => $amount + 4250,
                 'instructions' => [],
@@ -322,7 +343,7 @@ class TripayService
             ? (string) (SystemSetting::get('tripay_prod_private_key') ?: '')
             : (string) (SystemSetting::get('tripay_sandbox_private_key') ?: SystemSetting::get('tripay_private_key', ''));
 
-        if (!empty($altPrivateKey)) {
+        if (! empty($altPrivateKey)) {
             $altCalculated = hash_hmac('sha256', $jsonPayload, $altPrivateKey);
             if (hash_equals($altCalculated, $incomingSignature)) {
                 return true;
@@ -331,7 +352,7 @@ class TripayService
 
         // 3. Multi-domain: Check against any event with custom private key
         try {
-            $customEventKeys = \App\Models\Event::whereNotNull('tripay_private_key')->pluck('tripay_private_key')->filter();
+            $customEventKeys = Event::whereNotNull('tripay_private_key')->pluck('tripay_private_key')->filter();
             foreach ($customEventKeys as $eventKey) {
                 if ($eventKey && hash_equals(hash_hmac('sha256', $jsonPayload, $eventKey), $incomingSignature)) {
                     return true;

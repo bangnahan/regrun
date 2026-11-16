@@ -167,8 +167,23 @@
                                     </span>
                                 </div>
                                 <div>
-                                    <span class="text-slate-400 block text-[11px]">Ukuran Jersey</span>
-                                    <span class="font-extrabold text-slate-900 text-sm bg-slate-100 px-2 py-0.5 rounded">{{ $p->jerseySize->size_code }}</span>
+                                    <span class="text-slate-400 block text-[11px]">Jersey &amp; Model</span>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-extrabold text-slate-900 text-sm bg-slate-100 px-2 py-0.5 rounded">{{ $p->jerseySize->size_code }}</span>
+                                        @if($p->jersey_type === 'long')
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                                                👔 Lengan Panjang
+                                            </span>
+                                        @elseif($p->jersey_type === 'singlet')
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-900 border border-sky-200">
+                                                🎽 Singlet
+                                            </span>
+                                        @else
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                                👕 Pendek
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
                                 <div>
                                     <span class="text-slate-400 block text-[11px]">Gol. Darah</span>
