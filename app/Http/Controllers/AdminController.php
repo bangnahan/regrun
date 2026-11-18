@@ -417,6 +417,43 @@ class AdminController extends Controller
     }
 
     /**
+     * Update participant jersey size and sleeve model
+     */
+    public function updateParticipantJersey(Request $request, int $id)
+    {
+        $participant = Participant::with(['transaction.event', 'jerseySize'])->findOrFail($id);
+
+        $request->validate([
+            'jersey_size_id' => 'required|exists:jersey_sizes,id',
+            'jersey_type' => 'required|in:short,long,singlet',
+            'bib_name' => 'nullable|string|max:12',
+        ]);
+
+        $event = $participant->transaction?->event;
+        $longSleevePrice = (float) ($event?->long_sleeve_price ?? 20000);
+
+        $jType = $request->jersey_type;
+        $jSurcharge = ($jType === 'long') ? $longSleevePrice : 0;
+
+        $updates = [
+            'jersey_size_id' => $request->jersey_size_id,
+            'jersey_type' => $jType,
+            'jersey_surcharge' => $jSurcharge,
+        ];
+
+        if ($request->filled('bib_name')) {
+            $updates['bib_name'] = strtoupper(trim(mb_substr($request->bib_name, 0, 12)));
+        }
+
+        $participant->update($updates);
+
+        $newSize = JerseySize::find($request->jersey_size_id);
+        $sizeCode = $newSize?->size_code ?? '';
+
+        return back()->with('success', "Jersey peserta '{$participant->full_name}' ({$participant->ticket_code}) berhasil diperbarui menjadi Size {$sizeCode} ({$participant->jersey_type_label}).");
+    }
+
+    /**
      * Export Participants CSV
      */
     public function exportParticipantsCsv(Request $request): StreamedResponse

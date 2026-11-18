@@ -5,7 +5,21 @@
 @endsection
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6" x-data="{
+    editJerseyModal: false,
+    editData: {
+        id: '',
+        name: '',
+        ticketCode: '',
+        sizeId: '',
+        type: 'short',
+        bibName: ''
+    },
+    openEdit(data) {
+        this.editData = { ...data };
+        this.editJerseyModal = true;
+    }
+}">
     <!-- Filter Bar -->
     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <form method="GET" action="{{ route('admin.participants') }}" class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
@@ -179,6 +193,19 @@
                                         👕 Pendek
                                     </span>
                                 @endif
+
+                                <button type="button" 
+                                        @click="openEdit({
+                                            id: {{ $p->id }},
+                                            name: '{{ addslashes($p->full_name) }}',
+                                            ticketCode: '{{ $p->ticket_code }}',
+                                            sizeId: '{{ $p->jersey_size_id }}',
+                                            type: '{{ $p->jersey_type ?? 'short' }}',
+                                            bibName: '{{ addslashes($p->bib_name) }}'
+                                        })"
+                                        class="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-2 py-0.5 rounded border border-orange-200 transition shadow-xs">
+                                    <span>✏️</span> Ubah
+                                </button>
                             </td>
                             <td class="p-4 font-bold text-slate-700">
                                 {{ $p->blood_type }}
@@ -214,6 +241,91 @@
 
         <div class="p-4 border-t border-slate-100">
             {{ $participants->links() }}
+        </div>
+    </div>
+
+    <!-- Modal: Edit Jersey & Data Peserta -->
+    <div x-show="editJerseyModal" 
+         x-cloak 
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="editJerseyModal = false" class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-base">Ubah Ukuran &amp; Model Jersey</h3>
+                    <p class="text-xs text-slate-500">
+                        Peserta: <strong class="text-slate-800" x-text="editData.name"></strong> (<span class="font-mono text-orange-600 font-bold" x-text="editData.ticketCode"></span>)
+                    </p>
+                </div>
+                <button type="button" @click="editJerseyModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center transition">
+                    &times;
+                </button>
+            </div>
+
+            <form :action="'/admin/participants/' + editData.id + '/jersey'" method="POST" class="space-y-4 text-xs">
+                @csrf
+
+                <!-- Ukuran Jersey -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Ukuran Jersey <span class="text-rose-500">*</span></label>
+                    <select name="jersey_size_id" x-model="editData.sizeId" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-bold text-sm bg-white focus:ring-2 focus:ring-orange-500">
+                        @foreach($jerseySizes as $s)
+                            <option value="{{ $s->id }}">Size {{ $s->size_code }} - {{ $s->label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Model Lengan -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2">Model Lengan Jersey <span class="text-rose-500">*</span></label>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <label class="cursor-pointer p-2.5 rounded-xl border flex flex-col items-center text-center transition"
+                               :class="editData.type === 'short' ? 'border-orange-500 bg-orange-50/60 font-bold text-orange-950 shadow-xs' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
+                            <input type="radio" name="jersey_type" value="short" x-model="editData.type" class="sr-only">
+                            <span class="text-xl mb-1">👕</span>
+                            <span class="text-xs font-bold leading-tight">Lengan Pendek</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">Standar</span>
+                        </label>
+
+                        <label class="cursor-pointer p-2.5 rounded-xl border flex flex-col items-center text-center transition"
+                               :class="editData.type === 'long' ? 'border-amber-500 bg-amber-50/80 font-bold text-amber-950 shadow-xs' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
+                            <input type="radio" name="jersey_type" value="long" x-model="editData.type" class="sr-only">
+                            <span class="text-xl mb-1">👔</span>
+                            <span class="text-xs font-bold leading-tight">Lengan Panjang</span>
+                            <span class="text-[10px] text-amber-600 font-bold mt-0.5">+Rp 20.000</span>
+                        </label>
+
+                        <label class="cursor-pointer p-2.5 rounded-xl border flex flex-col items-center text-center transition"
+                               :class="editData.type === 'singlet' ? 'border-sky-500 bg-sky-50/80 font-bold text-sky-950 shadow-xs' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
+                            <input type="radio" name="jersey_type" value="singlet" x-model="editData.type" class="sr-only">
+                            <span class="text-xl mb-1">🎽</span>
+                            <span class="text-xs font-bold leading-tight">Singlet</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">Tanpa Lengan</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Nama di BIB -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Nama di Dada BIB (Maks. 12 Karakter)</label>
+                    <input type="text" name="bib_name" x-model="editData.bibName" maxlength="12" placeholder="Contoh: BUDI" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono font-bold uppercase text-xs">
+                    <p class="text-[10px] text-slate-400 mt-1">Kosongkan jika tidak ingin mengubah nama BIB.</p>
+                </div>
+
+                <!-- Notice Box -->
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] leading-relaxed">
+                    💡 <strong>Informasi Sinkronisasi Otomatis:</strong><br>
+                    Setelah disimpan, data akan langsung otomatis diperbarui pada <strong>Rekap PO Konveksi</strong>, file <strong>CSV Export</strong>, dan tampilan <strong>E-Ticket</strong> peserta.
+                </div>
+
+                <div class="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+                    <button type="button" @click="editJerseyModal = false" class="px-4 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-600 hover:bg-slate-50 transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-extrabold shadow-md shadow-orange-600/20 transition">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
