@@ -258,7 +258,7 @@ class TripayService
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$this->apiKey,
+                'Authorization' => 'Bearer '.$apiKey,
             ])->timeout(12)->post($this->baseUrl.'transaction/create', $payload);
 
             $resData = $response->json();

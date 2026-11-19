@@ -311,118 +311,132 @@ class RegistrationController extends Controller
         $event = Event::findOrFail($eventId);
 
         // Execute in database transaction with pessimistic locking
-        $transaction = DB::transaction(function () use ($event, $selectedTickets, $participantsData, $request) {
-            $subtotal = 0;
+        try {
+            $transaction = DB::transaction(function () use ($event, $selectedTickets, $participantsData, $request) {
+                $subtotal = 0;
 
-            // 1. Lock categories and check quota
-            foreach ($selectedTickets as $item) {
-                $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
-                $category = TicketCategory::where('id', $catId)
-                    ->where('event_id', $event->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+                // 1. Lock categories and check quota
+                foreach ($selectedTickets as $item) {
+                    $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
+                    $category = TicketCategory::where('id', $catId)
+                        ->where('event_id', $event->id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
-                if ($category->remaining_quota < $item['quantity']) {
-                    throw new \Exception("Maaf, kuota untuk tiket {$category->name} tidak mencukupi.");
+                    if ($category->remaining_quota < $item['quantity']) {
+                        throw new \Exception("Maaf, kuota untuk tiket {$category->name} tidak mencukupi.");
+                    }
+
+                    // Increment reserved count
+                    $category->increment('reserved_count', $item['quantity']);
+                    $subtotal += ($item['price'] * $item['quantity']);
                 }
 
-                // Increment reserved count
-                $category->increment('reserved_count', $item['quantity']);
-                $subtotal += ($item['price'] * $item['quantity']);
-            }
-
-            // Calculate jersey surcharge (e.g. Long sleeve)
-            $longSleevePrice = (float) ($event->long_sleeve_price ?? 20000);
-            $jerseySurchargeTotal = 0;
-            foreach ($participantsData as $p) {
-                if (($p['jersey_type'] ?? 'short') === 'long') {
-                    $jerseySurchargeTotal += $longSleevePrice;
+                // Calculate jersey surcharge (e.g. Long sleeve)
+                $longSleevePrice = (float) ($event->long_sleeve_price ?? 20000);
+                $jerseySurchargeTotal = 0;
+                foreach ($participantsData as $p) {
+                    if (($p['jersey_type'] ?? 'short') === 'long') {
+                        $jerseySurchargeTotal += $longSleevePrice;
+                    }
                 }
-            }
-            $subtotal += $jerseySurchargeTotal;
+                $subtotal += $jerseySurchargeTotal;
 
-            // Estimate admin fee (default Tripay fee flat 4.500)
-            $feeAmount = 4500;
-            $grandTotal = $subtotal + $feeAmount;
+                // Estimate admin fee (default Tripay fee flat 4.500)
+                $feeAmount = 4500;
+                $grandTotal = $subtotal + $feeAmount;
 
-            $invoiceNumber = 'INV-'.date('Ymd').'-'.strtoupper(Str::random(5));
-            $merchantRef = 'TRX-'.time().'-'.Str::random(4);
+                $invoiceNumber = 'INV-'.date('Ymd').'-'.strtoupper(Str::random(5));
+                $merchantRef = 'TRX-'.time().'-'.Str::random(4);
 
-            // 2. Create Transaction
-            $trx = Transaction::create([
-                'event_id' => $event->id,
-                'invoice_number' => $invoiceNumber,
-                'tripay_merchant_ref' => $merchantRef,
-                'buyer_name' => $request->buyer_name,
-                'buyer_email' => $request->buyer_email,
-                'buyer_phone' => $request->buyer_phone,
-                'subtotal' => $subtotal,
-                'fee_amount' => $feeAmount,
-                'grand_total' => $grandTotal,
-                'payment_method' => $request->payment_method,
-                'payment_channel_code' => $request->payment_method,
-                'status' => 'UNPAID',
-                'expires_at' => now()->addMinutes(60),
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'meta_fbp' => $request->input('meta_fbp') ?: $request->cookie('_fbp'),
-                'meta_fbc' => $request->input('meta_fbc') ?: $request->cookie('_fbc'),
-            ]);
-
-            // 3. Create Transaction Items
-            foreach ($selectedTickets as $item) {
-                $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
-                TransactionItem::create([
-                    'transaction_id' => $trx->id,
-                    'ticket_category_id' => $catId,
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['price'],
-                    'subtotal' => $item['price'] * $item['quantity'],
+                // 2. Create Transaction
+                $trx = Transaction::create([
+                    'event_id' => $event->id,
+                    'invoice_number' => $invoiceNumber,
+                    'tripay_merchant_ref' => $merchantRef,
+                    'buyer_name' => $request->buyer_name,
+                    'buyer_email' => $request->buyer_email,
+                    'buyer_phone' => $request->buyer_phone,
+                    'subtotal' => $subtotal,
+                    'fee_amount' => $feeAmount,
+                    'grand_total' => $grandTotal,
+                    'payment_method' => $request->payment_method,
+                    'payment_channel_code' => $request->payment_method,
+                    'status' => 'UNPAID',
+                    'expires_at' => now()->addMinutes(60),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'meta_fbp' => $request->input('meta_fbp') ?: $request->cookie('_fbp'),
+                    'meta_fbc' => $request->input('meta_fbc') ?: $request->cookie('_fbc'),
                 ]);
-            }
 
-            // 4. Create Participants
-            $participantIndex = 0;
-            foreach ($selectedTickets as $item) {
-                $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
-                for ($i = 0; $i < $item['quantity']; $i++) {
-                    $pData = $participantsData[$participantIndex] ?? [];
-                    [$ticketCode, $qrCodeHash] = Participant::generateUniqueCodes();
-                    $jType = isset($pData['jersey_type']) && in_array($pData['jersey_type'], ['short', 'long', 'singlet'], true) ? $pData['jersey_type'] : 'short';
-                    $jSurcharge = ($jType === 'long') ? $longSleevePrice : 0;
-
-                    Participant::create([
+                // 3. Create Transaction Items
+                foreach ($selectedTickets as $item) {
+                    $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
+                    TransactionItem::create([
                         'transaction_id' => $trx->id,
                         'ticket_category_id' => $catId,
-                        'jersey_size_id' => $pData['jersey_size_id'],
-                        'jersey_type' => $jType,
-                        'jersey_surcharge' => $jSurcharge,
-                        'ticket_code' => $ticketCode,
-                        'full_name' => $pData['full_name'],
-                        'identity_number' => $pData['identity_number'],
-                        'gender' => $pData['gender'],
-                        'date_of_birth' => $pData['date_of_birth'],
-                        'phone_number' => $pData['phone_number'],
-                        'email' => $pData['email'],
-                        'blood_type' => $pData['blood_type'],
-                        'bib_name' => strtoupper($pData['bib_name']),
-                        'emergency_contact_name' => $pData['emergency_contact_name'],
-                        'emergency_contact_phone' => $pData['emergency_contact_phone'],
-                        'emergency_contact_relation' => $pData['emergency_contact_relation'],
-                        'medical_notes' => $pData['medical_notes'] ?? null,
-                        'running_club' => $pData['running_club'] ?? null,
-                        'qr_code_hash' => $qrCodeHash,
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['price'],
+                        'subtotal' => $item['price'] * $item['quantity'],
                     ]);
-
-                    $participantIndex++;
                 }
-            }
 
-            return $trx;
-        });
+                // 4. Create Participants
+                $participantIndex = 0;
+                foreach ($selectedTickets as $item) {
+                    $catId = $item['category_id'] ?? (is_array($item['category']) ? ($item['category']['id'] ?? null) : ($item['category']->id ?? null));
+                    for ($i = 0; $i < $item['quantity']; $i++) {
+                        $pData = $participantsData[$participantIndex] ?? [];
+                        [$ticketCode, $qrCodeHash] = Participant::generateUniqueCodes();
+                        $jType = isset($pData['jersey_type']) && in_array($pData['jersey_type'], ['short', 'long', 'singlet'], true) ? $pData['jersey_type'] : 'short';
+                        $jSurcharge = ($jType === 'long') ? $longSleevePrice : 0;
+
+                        Participant::create([
+                            'transaction_id' => $trx->id,
+                            'ticket_category_id' => $catId,
+                            'jersey_size_id' => $pData['jersey_size_id'],
+                            'jersey_type' => $jType,
+                            'jersey_surcharge' => $jSurcharge,
+                            'ticket_code' => $ticketCode,
+                            'full_name' => $pData['full_name'],
+                            'identity_number' => $pData['identity_number'],
+                            'gender' => $pData['gender'],
+                            'date_of_birth' => $pData['date_of_birth'],
+                            'phone_number' => $pData['phone_number'],
+                            'email' => $pData['email'],
+                            'blood_type' => $pData['blood_type'],
+                            'bib_name' => strtoupper($pData['bib_name']),
+                            'emergency_contact_name' => $pData['emergency_contact_name'],
+                            'emergency_contact_phone' => $pData['emergency_contact_phone'],
+                            'emergency_contact_relation' => $pData['emergency_contact_relation'],
+                            'medical_notes' => $pData['medical_notes'] ?? null,
+                            'running_club' => $pData['running_club'] ?? null,
+                            'qr_code_hash' => $qrCodeHash,
+                        ]);
+
+                        $participantIndex++;
+                    }
+                }
+
+                return $trx;
+            });
+        } catch (\Throwable $e) {
+            Log::error('Registration processPayment DB transaction error: '.$e->getMessage(), [
+                'exception' => $e,
+                'event_id' => $event->id,
+            ]);
+
+            return back()->with('error', $e->getMessage() ?: 'Terjadi kendala saat memproses pendaftaran. Silakan coba kembali.');
+        }
 
         // 5. Call Tripay to generate closed transaction
-        $tripayResult = $this->tripayService->createTransaction($transaction, $request->payment_method);
+        try {
+            $tripayResult = $this->tripayService->createTransaction($transaction, $request->payment_method);
+        } catch (\Throwable $e) {
+            Log::error('Registration processPayment Tripay exception: '.$e->getMessage(), ['exception' => $e]);
+            $tripayResult = ['success' => false, 'message' => $e->getMessage()];
+        }
 
         if (empty($tripayResult['success'])) {
             // SECURITY & INVENTORY INTEGRITY: Release reserved quota immediately so tickets are not locked
