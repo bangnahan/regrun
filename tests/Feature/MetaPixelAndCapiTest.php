@@ -297,4 +297,60 @@ class MetaPixelAndCapiTest extends TestCase
         $responsePaid->assertSee('fbq(\'track\', \'Purchase\'', false);
         $responsePaid->assertSee('eventID: \'INV-PAID-TEST\'', false);
     }
+
+    public function test_registration_handles_long_meta_fbc_without_database_truncation_error(): void
+    {
+        $event = Event::first();
+        $category = TicketCategory::where('event_id', $event->id)->first();
+        $size = JerseySize::first();
+
+        $longFbclid = 'fb.1.'.time().'.'.str_repeat('IwARlongTokenSegment_', 20); // ~400 characters
+
+        // Step 1
+        $this->post(route('register.step_participants'), [
+            'event_id' => $event->id,
+            'tickets' => [$category->id => 1],
+        ]);
+
+        // Step 2
+        $this->post(route('register.step_checkout'), [
+            'participants' => [
+                [
+                    'full_name' => 'Pelari Dari Iklan Meta',
+                    'identity_number' => '3201010101010099',
+                    'gender' => 'L',
+                    'date_of_birth' => '1995-05-15',
+                    'phone_number' => '081234567890',
+                    'email' => 'meta_runner@example.com',
+                    'jersey_size_id' => $size->id,
+                    'jersey_type' => 'short',
+                    'blood_type' => 'O',
+                    'bib_name' => 'METARUN',
+                    'emergency_contact_name' => 'Kontak',
+                    'emergency_contact_phone' => '081299990001',
+                    'emergency_contact_relation' => 'Kerabat',
+                ],
+            ],
+        ]);
+
+        // Step 3 (Payment processing with long meta_fbc)
+        $response = $this->post(route('register.process_payment'), [
+            'buyer_name' => 'Pembeli Iklan FB',
+            'buyer_email' => 'meta_runner@example.com',
+            'buyer_phone' => '081234567890',
+            'payment_method' => 'QRIS',
+            'agree_terms' => '1',
+            'meta_fbc' => $longFbclid,
+            'meta_fbp' => 'fb.1.1731760000.999888777',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('transactions', [
+            'buyer_email' => 'meta_runner@example.com',
+        ]);
+
+        $trx = Transaction::where('buyer_email', 'meta_runner@example.com')->first();
+        $this->assertNotNull($trx);
+        $this->assertSame($longFbclid, $trx->meta_fbc);
+    }
 }

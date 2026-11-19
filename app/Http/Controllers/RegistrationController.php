@@ -349,6 +349,11 @@ class RegistrationController extends Controller
                 $invoiceNumber = 'INV-'.date('Ymd').'-'.strtoupper(Str::random(5));
                 $merchantRef = 'TRX-'.time().'-'.Str::random(4);
 
+                $rawFbp = $request->input('meta_fbp') ?: $request->cookie('_fbp');
+                $rawFbc = $request->input('meta_fbc') ?: $request->cookie('_fbc');
+                $fbp = is_string($rawFbp) ? mb_substr(trim($rawFbp), 0, 1000) : null;
+                $fbc = is_string($rawFbc) ? mb_substr(trim($rawFbc), 0, 1000) : null;
+
                 // 2. Create Transaction
                 $trx = Transaction::create([
                     'event_id' => $event->id,
@@ -366,8 +371,8 @@ class RegistrationController extends Controller
                     'expires_at' => now()->addMinutes(60),
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
-                    'meta_fbp' => $request->input('meta_fbp') ?: $request->cookie('_fbp'),
-                    'meta_fbc' => $request->input('meta_fbc') ?: $request->cookie('_fbc'),
+                    'meta_fbp' => $fbp,
+                    'meta_fbc' => $fbc,
                 ]);
 
                 // 3. Create Transaction Items
