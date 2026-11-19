@@ -20,9 +20,9 @@
     selectedIcon: '{{ $defaultIcon }}',
     selectedName: '{{ $defaultName }}',
     fillFromParticipant1() {
-        let p1Name = '{{ addslashes($participantsData[0]['full_name'] ?? '') }}';
-        let p1Email = '{{ addslashes($participantsData[0]['email'] ?? '') }}';
-        let p1Phone = '{{ addslashes($participantsData[0]['phone_number'] ?? '') }}';
+        let p1Name = {!! json_encode($participantsData[0]['full_name'] ?? '') !!};
+        let p1Email = {!! json_encode($participantsData[0]['email'] ?? '') !!};
+        let p1Phone = {!! json_encode($participantsData[0]['phone_number'] ?? '') !!};
 
         if (p1Name) document.getElementById('buyer_name').value = p1Name;
         if (p1Email) document.getElementById('buyer_email').value = p1Email;

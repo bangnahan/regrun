@@ -261,7 +261,7 @@ class RegistrationController extends Controller
             'participants.*.emergency_contact_relation.required' => 'Hubungan dengan kontak darurat wajib dipilih.',
         ]);
 
-        $participantsData = $request->participants;
+        $participantsData = array_values($request->participants);
 
         // Save participant details into session
         session(['registration_participants' => $participantsData]);

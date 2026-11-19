@@ -326,36 +326,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!form) return;
 
     form.addEventListener('submit', function(e) {
-        // Find first invalid input (native HTML5 check)
-        const invalid = form.querySelector(':invalid');
-        if (invalid) {
-            e.preventDefault();
-            
-            // Highlight element
-            invalid.classList.add('border-rose-500', 'ring-2', 'ring-rose-400', 'bg-rose-50');
-            
-            // Scroll to the invalid element smoothly (especially for iOS Safari)
-            invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            setTimeout(function() {
+        if (!form.checkValidity()) {
+            const invalid = form.querySelector(':invalid');
+            if (invalid) {
+                invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 try { invalid.focus(); } catch (err) {}
-            }, 300);
-
-            // Determine friendly label
-            let label = invalid.closest('div')?.querySelector('label')?.innerText?.replace('*', '').trim() 
-                     || invalid.placeholder 
-                     || 'Data wajib diisi';
-            
-            alert('⚠️ ' + label + ' belum diisi atau formatnya belum sesuai. Mohon periksa kembali.');
-            return false;
+            }
+            return;
         }
 
-        // Show loading state on button
         const btn = document.getElementById('btnSubmitParticipants');
         if (btn) {
-            btn.disabled = true;
+            btn.classList.add('pointer-events-none', 'opacity-75');
             btn.innerHTML = '<span>Memproses...</span>';
-            btn.classList.add('opacity-75');
         }
     });
 });
