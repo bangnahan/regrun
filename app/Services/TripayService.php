@@ -223,6 +223,20 @@ class TripayService
             ];
         }
 
+        // Ensure order_items subtotal sum exactly matches amount
+        $itemsSum = (int) array_sum(array_column($orderItems, 'subtotal'));
+        if ($itemsSum !== $amount && ! empty($orderItems)) {
+            $diff = $amount - $itemsSum;
+            $orderItems[0]['subtotal'] += $diff;
+            $orderItems[0]['price'] = (int) round($orderItems[0]['subtotal'] / max(1, (int) $orderItems[0]['quantity']));
+        }
+
+        // Clean customer phone (digits only, e.g. 0812...)
+        $cleanPhone = preg_replace('/[^0-9]/', '', (string) $transaction->buyer_phone) ?? '';
+        if (str_starts_with($cleanPhone, '62')) {
+            $cleanPhone = '0'.substr($cleanPhone, 2);
+        }
+
         // Multi-domain dynamic return and callback URLs
         $domain = $transaction->event?->getPrimaryDomain() ?? request()->getHost();
         $scheme = request()->isSecure() ? 'https://' : 'http://';
@@ -243,9 +257,9 @@ class TripayService
             'method' => $channelCode,
             'merchant_ref' => $merchantRef,
             'amount' => $amount,
-            'customer_name' => $transaction->buyer_name,
-            'customer_email' => $transaction->buyer_email,
-            'customer_phone' => $transaction->buyer_phone,
+            'customer_name' => trim($transaction->buyer_name),
+            'customer_email' => trim($transaction->buyer_email),
+            'customer_phone' => $cleanPhone ?: $transaction->buyer_phone,
             'order_items' => $orderItems,
             'return_url' => $returnUrl,
             'expired_time' => now()->addMinutes(120)->timestamp,
